@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"strconv"
+	
+	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/websocket"
 )
 
 var exitHub *Hub
