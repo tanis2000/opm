@@ -49,14 +49,14 @@ func (c *Client) Send(data []byte) {
 func (c *Client) readHandler() {
 	defer func() {
 		c.conn.Close()
-		c.Hub.Remove(c.Id)
+		c.Hub.Remove(c.ID)
 		c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
 	}()
 
 	for {
 		_, mes, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Info("Listener: client disconnected " + string(c.Id))
+			log.Info("Listener: client disconnected " + string(c.ID))
 			break
 		}
 		c.Response <- &Message{mes, c, time.Now().Unix()}
@@ -70,7 +70,7 @@ func (c *Client) Listen() {
 	go c.readHandler()
 	defer func() {
 		c.conn.Close()
-		c.Hub.Remove(c.Id)
+		c.Hub.Remove(c.ID)
 		c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
 	}()
 

@@ -39,7 +39,7 @@ func (h *Hub) Listen() {
 		select {
 
 		case client := <-h.RegisterC:
-			h.proxies[client.Id] = client
+			h.proxies[client.ID] = client
 
 		case client := <-h.UnRegisterC:
 			delete(h.proxies, client)
