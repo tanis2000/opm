@@ -1,11 +1,11 @@
  language: go
   
   go:
-  - 1.7
+   - 1.7
   
   install:
-  - go get github.com/Sirupsen/logrus
-  - go get github.com/gorilla/websocket
+   - go get github.com/Sirupsen/logrus
+   - go get github.com/gorilla/websocket
   
   # Disable the default submodule logic
   git:
