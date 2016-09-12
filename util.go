@@ -81,6 +81,9 @@ func queueTrainer(t *TrainerSession) {
 
 // Login initializes a (new) session. This can be used to login again, after the session is expired.
 func (t *TrainerSession) Login() error {
+	if !t.session.IsExpired() {
+		return nil
+	}
 	provider, err := auth.NewProvider(t.account.Provider, t.account.Username, t.account.Password)
 	if err != nil {
 		return err
