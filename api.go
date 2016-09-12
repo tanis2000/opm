@@ -107,16 +107,8 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Query api
 	<-ticks
 	mapObjects, err := trainer.GetPlayerMap()
-	if err != nil {
-		if err == api.ErrNewRPCURL {
-			// Try again after ScanDelay
-			time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
-			<-ticks
-			mapObjects, err = trainer.GetPlayerMap()
-			if err != nil {
-				return &mapResult{}, err
-			}
-		}
+	if err != nil && err != api.ErrNewRPCURL {
+		return &mapResult{}, err
 	}
 	// Parse and return result
 	return parseMapObjects(mapObjects), nil
