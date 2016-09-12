@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-
 	"encoding/json"
 	"io/ioutil"
-
 	"time"
 
 	"github.com/femot/pgoapi-go/api"
@@ -58,10 +56,10 @@ func NewTrainerSession(account Account, location *api.Location, feed api.Feed, c
 }
 
 // LoadTrainers creates TrainerSessions for a slice of Accounts
-func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto, startLocation *api.Location) []*TrainerSession {
+func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*TrainerSession {
 	trainers := make([]*TrainerSession, 0)
 	for _, a := range accounts {
-		trainers = append(trainers, NewTrainerSession(a, startLocation, feed, crypto))
+		trainers = append(trainers, NewTrainerSession(a, &api.Location{}, feed, crypto))
 	}
 	return trainers
 }

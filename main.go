@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
@@ -21,7 +20,7 @@ func main() {
 		log.Fatal("Could not load settings")
 	}
 	// Load trainers
-	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{}, &api.Location{})
+	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{})
 	// Create channels
 	ticks = make(chan bool)
 	trainerQueue = make(chan *TrainerSession, len(trainers))

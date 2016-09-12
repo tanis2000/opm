@@ -1,14 +1,11 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
-	"strconv"
-
 	"encoding/json"
 	"errors"
-
+	"log"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/femot/gophermon"
@@ -93,21 +90,22 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Get trainer from queue
 	trainer := getTrainer()
 	defer queueTrainer(trainer)
-	// Login trainer
-	err := trainer.Login()
+	// Set location
+	location := &api.Location{Lat: lat, Lon: lng}
+	trainer.MoveTo(location)
+	// Set accuracy and altitude
+	gophermon.SetRandomAccuracy(location)
+	err := gophermon.SetCorrectAltitudes([]*api.Location{location}, settings.GmapsKey)
 	if err != nil {
 		return &mapResult{}, err
 	}
-	location := &api.Location{Lat: lat, Lon: lng}
-	// Set accuracy and altitude
-	gophermon.SetRandomAccuracy(location)
-	err = gophermon.SetCorrectAltitudes([]*api.Location{location}, settings.GmapsKey)
+	// Login trainer
+	err = trainer.Login()
 	if err != nil {
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
-	trainer.MoveTo(location)
 	mapObjects, err := trainer.GetPlayerMap()
 	if err != nil {
 		if err == api.ErrNewRPCURL {
