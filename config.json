@@ -1,0 +1,18 @@
+{
+  "accounts": [
+    {
+      "username": "gertraud",
+      "password": "geheim123",
+      "provider": "ptc"
+    },
+    {
+      "username": "kevin",
+      "password": "leet1998",
+      "provider": "ptc"
+    }
+  ],
+  "listenAddress": ":8000",
+  "gmapsKey": "ACNL03r12nskldnf<S=hn=HsgsdlfLÖASDFnf",
+  "scanDelay": 20,
+  "apiCallRate": 500
+}
