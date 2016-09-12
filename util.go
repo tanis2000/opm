@@ -12,9 +12,11 @@ import (
 )
 
 type Settings struct {
-	Accounts   []Account
-	ListenAddr string
-	GmapsKey   string
+	Accounts    []Account
+	ListenAddr  string
+	GmapsKey    string
+	ScanDelay   int // Time between scans per account in seconds
+	ApiCallRate int // Time between API calls in milliseconds
 }
 
 type Account struct {
@@ -72,7 +74,7 @@ func getTrainer() *TrainerSession {
 func queueTrainer(t *TrainerSession) {
 	// Trainer will have to wait 10s before he can accept the next call. Wrap it in goroutine to not block the caller.
 	go func(x *TrainerSession) {
-		time.Sleep(10 * time.Second)
+		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
 		trainerQueue <- x
 	}(t)
 }

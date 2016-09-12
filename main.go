@@ -30,7 +30,7 @@ func main() {
 			ticks <- true
 			time.Sleep(d)
 		}
-	}(200 * time.Millisecond)
+	}(time.Duration(settings.ApiCallRate) * time.Millisecond)
 	// Fill trainerQueue
 	for _, t := range trainers {
 		trainerQueue <- t
