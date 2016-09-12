@@ -21,10 +21,10 @@ func listenAndServe() {
 }
 
 type encounter struct {
-	PokemonId  int
-	Lat        float64
-	Lng        float64
-	BestBefore int64
+	PokemonId     int
+	Lat           float64
+	Lng           float64
+	DisappearTime int64
 }
 
 type pokestop struct {
@@ -131,7 +131,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 			tth := p.TimeTillHiddenMs
 			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
 			result.Encounters = append(result.Encounters,
-				encounter{PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, BestBefore: bestBefore})
+				encounter{PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
 		}
 		// Forts
 		for _, f := range c.Forts {
