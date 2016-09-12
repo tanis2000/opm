@@ -1,0 +1,237 @@
+{
+  "map_cells": [
+    {
+      "s2_cell_id": 5161187732386480128,
+      "current_timestamp_ms": 1473673015197,
+      "forts": [
+        {
+          "id": "024a1a96383a4b7195b9f132b33a636c.16",
+          "last_modified_timestamp_ms": 1473672659134,
+          "latitude": 49.675681,
+          "longitude": 12.164399,
+          "enabled": true,
+          "owned_by_team": 1,
+          "guard_pokemon_id": 134,
+          "gym_points": 3500
+        },
+        {
+          "id": "0d21e0bec63849638dc13883feb585b7.16",
+          "last_modified_timestamp_ms": 1472932301835,
+          "latitude": 49.675974,
+          "longitude": 12.165343,
+          "enabled": true,
+          "type": 1
+        },
+        {
+          "id": "3decfe58469142b29db48c2e545c999a.16",
+          "last_modified_timestamp_ms": 1473668677592,
+          "latitude": 49.67548,
+          "longitude": 12.163332,
+          "enabled": true,
+          "type": 1
+        },
+        {
+          "id": "5236a29977334b3896dad45a347dac72.16",
+          "last_modified_timestamp_ms": 1473000086675,
+          "latitude": 49.674443,
+          "longitude": 12.165714,
+          "enabled": true,
+          "type": 1
+        },
+        {
+          "id": "b103142238ba4cc99180133bbab414d0.16",
+          "last_modified_timestamp_ms": 1473672694510,
+          "latitude": 49.676314,
+          "longitude": 12.16486,
+          "enabled": true,
+          "type": 1,
+          "active_fort_modifier": [
+            501
+          ]
+        },
+        {
+          "id": "f826b9da3c8041aca2d6b505e4895117.16",
+          "last_modified_timestamp_ms": 1473669110288,
+          "latitude": 49.675129,
+          "longitude": 12.163405,
+          "enabled": true,
+          "type": 1
+        }
+      ],
+      "spawn_points": [
+        {
+          "latitude": 49.674857107399156,
+          "longitude": 12.16622641081212
+        },
+        {
+          "latitude": 49.674073130708074,
+          "longitude": 12.163707067143099
+        },
+        {
+          "latitude": 49.67459206400696,
+          "longitude": 12.165675223472116
+        },
+        {
+          "latitude": 49.67411717206739,
+          "longitude": 12.164814680624156
+        },
+        {
+          "latitude": 49.6739293430207,
+          "longitude": 12.165059125829469
+        },
+        {
+          "latitude": 49.67513332864668,
+          "longitude": 12.165911740278894
+        }
+      ]
+    },
+    {
+      "s2_cell_id": 5161187734533963776,
+      "current_timestamp_ms": 1473673015197,
+      "forts": [
+        {
+          "id": "a38533641dba4c0ea6f6097bb5807e80.16",
+          "last_modified_timestamp_ms": 1473672538826,
+          "latitude": 49.675968,
+          "longitude": 12.167005,
+          "enabled": true,
+          "owned_by_team": 2,
+          "guard_pokemon_id": 131,
+          "gym_points": 6000
+        }
+      ],
+      "spawn_points": [
+        {
+          "latitude": 49.67382941970271,
+          "longitude": 12.168280693332017
+        },
+        {
+          "latitude": 49.67595058402848,
+          "longitude": 12.167357347307894
+        },
+        {
+          "latitude": 49.67574061363291,
+          "longitude": 12.167809827778882
+        },
+        {
+          "latitude": 49.67421602670241,
+          "longitude": 12.16844966526839
+        }
+      ],
+      "wild_pokemons": [
+        {
+          "encounter_id": 16359134400717674509,
+          "last_modified_timestamp_ms": 1473673015197,
+          "latitude": 49.67382941970271,
+          "longitude": 12.168280693332017,
+          "spawn_point_id": "47a038e6597",
+          "pokemon_data": {
+            "pokemon_id": 19
+          },
+          "time_till_hidden_ms": 44159
+        },
+        {
+          "encounter_id": 8150493192075902493,
+          "last_modified_timestamp_ms": 1473673015197,
+          "latitude": 49.67421602670241,
+          "longitude": 12.16844966526839,
+          "spawn_point_id": "47a038e644d",
+          "pokemon_data": {
+            "pokemon_id": 13
+          },
+          "time_till_hidden_ms": 613271
+        },
+        {
+          "encounter_id": 1450928051550454045,
+          "last_modified_timestamp_ms": 1473673015197,
+          "latitude": 49.67400631893335,
+          "longitude": 12.16737841437996,
+          "spawn_point_id": "47a038e666b",
+          "pokemon_data": {
+            "pokemon_id": 129
+          },
+          "time_till_hidden_ms": 86991
+        }
+      ],
+      "catchable_pokemons": [
+        {
+          "spawn_point_id": "47a038e6597",
+          "encounter_id": 16359134400717674509,
+          "pokemon_id": 19,
+          "expiration_timestamp_ms": 1473673059356,
+          "latitude": 49.67382941970271,
+          "longitude": 12.168280693332017
+        },
+        {
+          "spawn_point_id": "47a038e644d",
+          "encounter_id": 8150493192075902493,
+          "pokemon_id": 13,
+          "expiration_timestamp_ms": 1473673628468,
+          "latitude": 49.67421602670241,
+          "longitude": 12.16844966526839
+        },
+        {
+          "spawn_point_id": "47a038e666b",
+          "encounter_id": 1450928051550454045,
+          "pokemon_id": 129,
+          "expiration_timestamp_ms": 1473673102188,
+          "latitude": 49.67400631893335,
+          "longitude": 12.16737841437996
+        }
+      ],
+      "nearby_pokemons": [
+        {
+          "pokemon_id": 19,
+          "encounter_id": 16359134400717674509
+        },
+        {
+          "pokemon_id": 13,
+          "encounter_id": 8150493192075902493
+        },
+        {
+          "pokemon_id": 129,
+          "encounter_id": 1450928051550454045
+        }
+      ]
+    },
+    {
+      "s2_cell_id": 5161187736681447424,
+      "current_timestamp_ms": 1473673015197,
+      "forts": [
+        {
+          "id": "a9faf7eb00b64456b6cc54d906b97fa0.16",
+          "last_modified_timestamp_ms": 1473427966168,
+          "latitude": 49.672729,
+          "longitude": 12.167156,
+          "enabled": true,
+          "type": 1
+        }
+      ]
+    },
+    {
+      "s2_cell_id": 5161187740976414720,
+      "current_timestamp_ms": 1473673015197
+    },
+    {
+      "s2_cell_id": 5161187745271382016,
+      "current_timestamp_ms": 1473673015197,
+      "forts": [
+        {
+          "id": "b48b4b5d410f4a15879a4a0d0ce84203.16",
+          "last_modified_timestamp_ms": 1473603142929,
+          "latitude": 49.676285,
+          "longitude": 12.167553,
+          "enabled": true,
+          "type": 1
+        }
+      ],
+      "spawn_points": [
+        {
+          "latitude": 49.67824793820585,
+          "longitude": 12.170103172660665
+        }
+      ]
+    }
+  ],
+  "status": 1
+}

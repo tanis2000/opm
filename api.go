@@ -109,8 +109,8 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	mapObjects, err := trainer.GetPlayerMap()
 	if err != nil {
 		if err == api.ErrNewRPCURL {
-			// Try again in 10s
-			time.Sleep(10 * time.Second)
+			// Try again after ScanDelay
+			time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
 			<-ticks
 			mapObjects, err = trainer.GetPlayerMap()
 			if err != nil {

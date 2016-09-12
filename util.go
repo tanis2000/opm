@@ -35,6 +35,16 @@ func loadSettings() (Settings, error) {
 	return settings, err
 }
 
+type Session interface {
+	Login() error
+	Announce() (*protos.GetMapObjectsResponse, error)
+	Call(requests []*protos.Request) (*protos.ResponseEnvelope, error)
+	GetInventory() (*protos.GetInventoryResponse, error)
+	GetPlayer() (*protos.GetPlayerResponse, error)
+	GetPlayerMap() (*protos.GetMapObjectsResponse, error)
+	MoveTo(location *api.Location)
+}
+
 type TrainerSession struct {
 	account   Account
 	context   context.Context
@@ -66,17 +76,17 @@ func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*Train
 	return trainers
 }
 
-func getTrainer() *TrainerSession {
+func getTrainer() Session {
 	t := <-trainerQueue
 	return t
 }
 
-func queueTrainer(t *TrainerSession) {
+func queueTrainer(s Session) {
 	// Trainer will have to wait 10s before he can accept the next call. Wrap it in goroutine to not block the caller.
-	go func(x *TrainerSession) {
+	go func(x Session) {
 		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
 		trainerQueue <- x
-	}(t)
+	}(s)
 }
 
 // Login initializes a (new) session. This can be used to login again, after the session is expired.

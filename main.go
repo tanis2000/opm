@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
@@ -10,20 +12,32 @@ import (
 
 var settings Settings
 var ticks chan bool
-var trainerQueue chan *TrainerSession
+var trainerQueue chan Session
 
 func main() {
+	// Check command line flags
+	if len(os.Args) == 3 {
+		if os.Args[1] == "test" {
+			n, err := strconv.Atoi(os.Args[2])
+			if err != nil {
+				log.Fatal(err)
+			}
+			runTestMode(n)
+			return
+		}
+	}
+
 	var err error
 	// Load settings
 	settings, err = loadSettings()
 	if err != nil {
-		log.Fatal("Could not load settings")
+		log.Fatal(err)
 	}
 	// Load trainers
 	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{})
 	// Create channels
 	ticks = make(chan bool)
-	trainerQueue = make(chan *TrainerSession, len(trainers))
+	trainerQueue = make(chan Session, len(trainers))
 	// Start ticker
 	go func(d time.Duration) {
 		for {
