@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("Could not load settings")
 	}
 	// Load trainers
-	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{}, &api.Location{Lat: 49.673829, Lon: 12.1682807, Alt: 401, Accuracy: 3})
+	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{}, &api.Location{})
 	// Create channels
 	ticks = make(chan bool)
 	trainerQueue = make(chan *TrainerSession, len(trainers))
