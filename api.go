@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"time"
+
 	"github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
@@ -28,9 +30,17 @@ type encounter struct {
 	TTH       int32
 }
 
-type pokestop struct{}
+type pokestop struct {
+	Lat   float64
+	Lng   float64
+	Lured bool
+}
 
-type gym struct{}
+type gym struct {
+	Lat  float64
+	Lng  float64
+	Team int
+}
 
 type mapResult struct {
 	Encounters []encounter
@@ -100,7 +110,15 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	trainer.MoveTo(location)
 	mapObjects, err := trainer.GetPlayerMap()
 	if err != nil {
-		return &mapResult{}, err
+		if err == api.ErrNewRPCURL {
+			// Try again in 10s
+			time.Sleep(10 * time.Second)
+			<-ticks
+			mapObjects, err = trainer.GetPlayerMap()
+			if err != nil {
+				return &mapResult{}, err
+			}
+		}
 	}
 	// Parse and return result
 	return parseMapObjects(mapObjects), nil
@@ -118,10 +136,12 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 		// Forts
 		for _, f := range c.Forts {
 			switch f.Type {
-			case protos.FortType_GYM:
-				// YAY a gym
 			case protos.FortType_CHECKPOINT:
-				// Better be lured
+				result.Pokestops = append(result.Pokestops,
+					pokestop{Lat: f.Latitude, Lng: f.Longitude, Lured: f.ActiveFortModifier != nil})
+			case protos.FortType_GYM:
+				result.Gyms = append(result.Gyms,
+					gym{Lat: f.Latitude, Lng: f.Longitude, Team: int(f.OwnedByTeam)})
 			}
 		}
 	}

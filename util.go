@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"time"
+
 	"github.com/femot/pgoapi-go/api"
 	"github.com/femot/pgoapi-go/auth"
 	"github.com/pogodevorg/POGOProtos-go"
@@ -70,7 +72,11 @@ func getTrainer() *TrainerSession {
 }
 
 func queueTrainer(t *TrainerSession) {
-	trainerQueue <- t
+	// Trainer will have to wait 10s before he can accept the next call. Wrap it in goroutine to not block the caller.
+	go func(x *TrainerSession) {
+		time.Sleep(10 * time.Second)
+		trainerQueue <- x
+	}(t)
 }
 
 // Login initializes a (new) session. This can be used to login again, after the session is expired.

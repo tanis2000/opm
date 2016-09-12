@@ -23,7 +23,7 @@ func main() {
 	// Load trainers
 	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{}, &api.Location{Lat: 49.673829, Lon: 12.1682807, Alt: 401, Accuracy: 3})
 	// Create channels
-	ticks := make(chan bool)
+	ticks = make(chan bool)
 	trainerQueue = make(chan *TrainerSession, len(trainers))
 	// Start ticker
 	go func(d time.Duration) {
