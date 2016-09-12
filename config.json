@@ -12,5 +12,7 @@
     }
   ],
   "listenAddress": ":8000",
-  "gmapsKey": "ACNL03r12nskldnf<S=hn=HsgsdlfLÖASDFnf"
+  "gmapsKey": "ACNL03r12nskldnf<S=hn=HsgsdlfLÖASDFnf",
+  "scanDelay": 20,
+  "apiCallRate": 500
 }
