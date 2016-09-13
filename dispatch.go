@@ -47,7 +47,8 @@ func (d *Dispatcher) runSessions() {
 // runAccounts continuously requests new accounts from the DB
 func (d *Dispatcher) runAccounts() {
 	for {
-		if a, err := d.RequestAccount(); err == nil {
+		// TODO: inline request
+		if a, err := d.requestAccount(); err == nil {
 			d.accounts <- a
 		} else {
 			time.Sleep(d.retryDelay)
@@ -59,7 +60,8 @@ func (d *Dispatcher) runAccounts() {
 // runProxies continuously requests new proxies from the DB
 func (d *Dispatcher) runProxies() {
 	for {
-		if p, err := d.RequestProxy(); err == nil {
+		// TODO: inline request
+		if p, err := d.requestProxy(); err == nil {
 			d.proxies <- p
 		} else {
 			time.Sleep(time.Duration(d.retryDelay) * time.Second)
@@ -74,16 +76,16 @@ func (d *Dispatcher) Start() {
 	go d.runSessions()
 }
 
-// RequestAccount tries to get a new Account
-func (d *Dispatcher) RequestAccount() (Account, error) {
+// RequestAccount tries to get a new Account from DB
+func (d *Dispatcher) requestAccount() (Account, error) {
 	// TODO: Try to get account from DB
 
 	// Else error
 	return Account{}, errors.New("No account available.")
 }
 
-// RequestProxy tries to get a new Proxy
-func (d *Dispatcher) RequestProxy() (Proxy, error) {
+// RequestProxy tries to get a new Proxy from DB
+func (d *Dispatcher) requestProxy() (Proxy, error) {
 	// TODO: Try to get proxy from DB
 
 	// Else error
@@ -108,4 +110,14 @@ func (d *Dispatcher) AddSession(s Session) {
 	go func(x Session) {
 		d.sessionsIn <- x
 	}(s)
+}
+
+// GetAccount returns a new Account
+func (d *Dispatcher) GetAccount() Account {
+	return <-d.accounts
+}
+
+// GetProxy returns a new Proxy
+func (d *Dispatcher) GetProxy() Proxy {
+	return <-d.proxies
 }

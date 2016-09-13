@@ -110,11 +110,7 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Handle proxy death
 	if err == api.ErrProxyDead {
 		// Get new proxy
-		p, e := dispatcher.RequestProxy()
-		if e != nil {
-			return &mapResult{}, e
-		}
-		trainer.SetProxy(p)
+		trainer.SetProxy(dispatcher.GetProxy())
 		// Retry with new proxy
 		mapObjects, err = trainer.GetPlayerMap()
 	}
