@@ -47,6 +47,7 @@ type Session interface {
 	GetPlayerMap() (*protos.GetMapObjectsResponse, error)
 	MoveTo(location *api.Location)
 	SetProxy(p Proxy)
+	SetAccount(a Account)
 }
 
 type TrainerSession struct {
@@ -101,6 +102,10 @@ func (t *TrainerSession) Login() error {
 
 func (t *TrainerSession) SetProxy(p Proxy) {
 	t.proxy = p
+}
+
+func (t *TrainerSession) SetAccount(a Account) {
+	t.account = a
 }
 
 // Wrap session functions for trainer sessions

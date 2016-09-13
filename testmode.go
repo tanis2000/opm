@@ -33,8 +33,8 @@ func (t *MockSession) GetPlayer() (*protos.GetPlayerResponse, error) {
 	return &protos.GetPlayerResponse{}, nil
 }
 func (t *MockSession) MoveTo(location *api.Location) {}
-
-func (t *MockSession) SetProxy(p Proxy) {}
+func (t *MockSession) SetProxy(p Proxy)              {}
+func (t *MockSession) SetAccount(a Account)          {}
 
 func runTestMode(n int) {
 	log.Println("Starting test mode")
