@@ -65,8 +65,8 @@ func runTestMode(n int) {
 	}
 
 	// Init dispatcher
-	dispatcher = newDispatcher(time.Millisecond, trainers)
-	dispatcher.start()
+	dispatcher = NewDispatcher(time.Millisecond, trainers)
+	dispatcher.Start()
 
 	// Start ticker
 	go func(d time.Duration) {

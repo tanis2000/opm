@@ -15,7 +15,7 @@ type Dispatcher struct {
 	retryDelay    time.Duration
 }
 
-func newDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
+func NewDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
 	sessionBuffer := sessions
 	return &Dispatcher{
 		accounts:      make(chan Account),
@@ -25,13 +25,6 @@ func newDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
 		sessionBuffer: sessionBuffer,
 		retryDelay:    retryDelay,
 	}
-}
-
-// start starts runSessions, runAccounts and runProxies as goroutines
-func (d *Dispatcher) start() {
-	go d.runAccounts()
-	go d.runProxies()
-	go d.runSessions()
 }
 
 // runSessions manages the Session buffer
@@ -54,7 +47,7 @@ func (d *Dispatcher) runSessions() {
 // runAccounts continuously requests new accounts from the DB
 func (d *Dispatcher) runAccounts() {
 	for {
-		if a, err := d.requestAccount(); err == nil {
+		if a, err := d.RequestAccount(); err == nil {
 			d.accounts <- a
 		} else {
 			time.Sleep(d.retryDelay)
@@ -66,7 +59,7 @@ func (d *Dispatcher) runAccounts() {
 // runProxies continuously requests new proxies from the DB
 func (d *Dispatcher) runProxies() {
 	for {
-		if p, err := d.requestProxy(); err == nil {
+		if p, err := d.RequestProxy(); err == nil {
 			d.proxies <- p
 		} else {
 			time.Sleep(time.Duration(d.retryDelay) * time.Second)
@@ -74,8 +67,15 @@ func (d *Dispatcher) runProxies() {
 	}
 }
 
+// start starts runSessions, runAccounts and runProxies as goroutines
+func (d *Dispatcher) Start() {
+	go d.runAccounts()
+	go d.runProxies()
+	go d.runSessions()
+}
+
 // RequestAccount tries to get a new Account
-func (d *Dispatcher) requestAccount() (Account, error) {
+func (d *Dispatcher) RequestAccount() (Account, error) {
 	// TODO: Try to get account from DB
 
 	// Else error
@@ -83,7 +83,7 @@ func (d *Dispatcher) requestAccount() (Account, error) {
 }
 
 // RequestProxy tries to get a new Proxy
-func (d *Dispatcher) requestProxy() (Proxy, error) {
+func (d *Dispatcher) RequestProxy() (Proxy, error) {
 	// TODO: Try to get proxy from DB
 
 	// Else error

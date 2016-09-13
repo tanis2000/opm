@@ -110,7 +110,7 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Handle proxy death
 	if err == api.ErrProxyDead {
 		// Get new proxy
-		p, e := dispatcher.requestProxy()
+		p, e := dispatcher.RequestProxy()
 		if e != nil {
 			return &mapResult{}, e
 		}

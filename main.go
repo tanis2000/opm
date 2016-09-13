@@ -40,8 +40,8 @@ func main() {
 	// Load sessions
 	trainers := LoadTrainers(settings.Accounts, feed, crypto)
 	// Init dispatcher
-	dispatcher = newDispatcher(time.Second, trainers)
-	dispatcher.start()
+	dispatcher = NewDispatcher(time.Second, trainers)
+	dispatcher.Start()
 	// Create channels
 	ticks = make(chan bool)
 	// Start ticker
