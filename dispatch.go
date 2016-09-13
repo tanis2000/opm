@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"time"
-
-	"github.com/femot/pgoapi-go/api"
 )
 
 // Dispatcher coordinates distribution of proxies and accounts to sessions
@@ -17,12 +15,8 @@ type Dispatcher struct {
 	retryDelay    time.Duration
 }
 
-func newDispatcher(retryDelay time.Duration, accounts []Account) *Dispatcher {
-	sessionBuffer := make([]Session, 0, len(accounts))
-	for _, a := range accounts {
-		s := NewTrainerSession(a, &api.Location{}, feed, crypto)
-		sessionBuffer = append(sessionBuffer, s)
-	}
+func newDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
+	sessionBuffer := sessions
 	return &Dispatcher{
 		accounts:      make(chan Account),
 		proxies:       make(chan Proxy),

@@ -34,6 +34,8 @@ func (t *MockSession) GetPlayer() (*protos.GetPlayerResponse, error) {
 }
 func (t *MockSession) MoveTo(location *api.Location) {}
 
+func (t *MockSession) SetProxy(p Proxy) {}
+
 func runTestMode(n int) {
 	log.Println("Starting test mode")
 
@@ -55,14 +57,16 @@ func runTestMode(n int) {
 
 	// Create channels
 	ticks = make(chan bool)
-	trainerQueue = make(chan Session, n)
 
 	// Create mock sessions
 	trainers := make([]Session, n)
 	for i := range trainers {
 		trainers[i] = &MockSession{DefaultResponse: mapObjects}
-		trainerQueue <- trainers[i]
 	}
+
+	// Init dispatcher
+	dispatcher = newDispatcher(time.Millisecond, trainers)
+	dispatcher.start()
 
 	// Start ticker
 	go func(d time.Duration) {
