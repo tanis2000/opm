@@ -25,6 +25,10 @@ type Account struct {
 	Provider string
 }
 
+type Proxy struct {
+	Id string
+}
+
 func loadSettings() (Settings, error) {
 	bytes, err := ioutil.ReadFile("config.json")
 	if err != nil {
@@ -76,19 +80,6 @@ func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*Train
 	return trainers
 }
 
-func getTrainer() Session {
-	t := <-trainerQueue
-	return t
-}
-
-func queueTrainer(s Session) {
-	// Trainer will have to wait 10s before he can accept the next call. Wrap it in goroutine to not block the caller.
-	go func(x Session) {
-		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
-		trainerQueue <- x
-	}(s)
-}
-
 // Login initializes a (new) session. This can be used to login again, after the session is expired.
 func (t *TrainerSession) Login() error {
 	if !t.session.IsExpired() {
@@ -126,4 +117,17 @@ func (t *TrainerSession) GetPlayerMap() (*protos.GetMapObjectsResponse, error) {
 func (t *TrainerSession) MoveTo(location *api.Location) {
 	t.location = location
 	t.session.MoveTo(location)
+}
+
+func getTrainer() Session {
+	t := <-trainerQueue
+	return t
+}
+
+func queueTrainer(s Session) {
+	// Trainer will have to wait 10s before he can accept the next call. Wrap it in goroutine to not block the caller.
+	go func(x Session) {
+		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
+		trainerQueue <- x
+	}(s)
 }

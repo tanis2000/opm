@@ -14,6 +14,9 @@ var settings Settings
 var ticks chan bool
 var trainerQueue chan Session
 
+var feed api.Feed
+var crypto api.Crypto
+
 func main() {
 	// Check command line flags
 	if len(os.Args) == 3 {
@@ -33,8 +36,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	crypto = &encrypt.Crypto{}
+	feed = &api.VoidFeed{}
 	// Load trainers
-	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{})
+	trainers := LoadTrainers(settings.Accounts, feed, crypto)
 	// Create channels
 	ticks = make(chan bool)
 	trainerQueue = make(chan Session, len(trainers))
