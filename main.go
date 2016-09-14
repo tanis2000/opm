@@ -12,7 +12,9 @@ import (
 
 var settings Settings
 var ticks chan bool
-var trainerQueue chan Session
+var feed api.Feed
+var crypto api.Crypto
+var dispatcher *Dispatcher
 
 func main() {
 	// Check command line flags
@@ -33,11 +35,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Load trainers
-	trainers := LoadTrainers(settings.Accounts, &api.VoidFeed{}, &encrypt.Crypto{})
+	crypto = &encrypt.Crypto{}
+	feed = &api.VoidFeed{}
+	// Load sessions
+	trainers := LoadTrainers(settings.Accounts, feed, crypto)
+	// Init dispatcher
+	dispatcher = NewDispatcher(time.Second, trainers)
+	dispatcher.Start()
 	// Create channels
 	ticks = make(chan bool)
-	trainerQueue = make(chan Session, len(trainers))
 	// Start ticker
 	go func(d time.Duration) {
 		for {
@@ -45,10 +51,6 @@ func main() {
 			time.Sleep(d)
 		}
 	}(time.Duration(settings.ApiCallRate) * time.Millisecond)
-	// Fill trainerQueue
-	for _, t := range trainers {
-		trainerQueue <- t
-	}
 	// Start webserver
 	log.Println("Starting http server")
 	listenAndServe()

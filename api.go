@@ -88,8 +88,8 @@ func writeApiResponse(w http.ResponseWriter, ok bool, error string, response *ma
 
 func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Get trainer from queue
-	trainer := getTrainer()
-	defer queueTrainer(trainer)
+	trainer := dispatcher.GetSession()
+	defer dispatcher.QueueSession(trainer)
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)
@@ -107,6 +107,19 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Query api
 	<-ticks
 	mapObjects, err := trainer.GetPlayerMap()
+	// Handle proxy death/ip bans
+	if err == api.ErrProxyDead || err == api.ErrIpSoftBanned {
+		// Get new proxy
+		trainer.SetProxy(dispatcher.GetProxy())
+		// Retry with new proxy
+		mapObjects, err = trainer.GetPlayerMap()
+	}
+	// Handle account ban
+	if err == api.ErrAccountBanned {
+		a := dispatcher.GetAccount()
+		trainer.SetAccount(a)
+		mapObjects, err = trainer.GetPlayerMap()
+	}
 	if err != nil && err != api.ErrNewRPCURL {
 		return &mapResult{}, err
 	}
