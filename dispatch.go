@@ -119,5 +119,7 @@ func (d *Dispatcher) GetAccount() Account {
 
 // GetProxy returns a new Proxy
 func (d *Dispatcher) GetProxy() Proxy {
+	// TODO: remove dummy return, when real proxies are ready
+	return Proxy{}
 	return <-d.proxies
 }

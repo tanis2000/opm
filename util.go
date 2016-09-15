@@ -14,6 +14,7 @@ type Settings struct {
 	Accounts    []Account
 	ListenAddr  string
 	GmapsKey    string
+	ProxyHost   string
 	ScanDelay   int // Time between scans per account in seconds
 	ApiCallRate int // Time between API calls in milliseconds
 }
@@ -92,7 +93,7 @@ func (t *TrainerSession) Login() error {
 		return err
 	}
 	session := api.NewSession(provider, t.location, t.feed, t.crypto, false)
-	err = session.Init(t.context)
+	err = session.Init(t.context, t.proxy.Id)
 	if err != nil {
 		return err
 	}
@@ -110,19 +111,19 @@ func (t *TrainerSession) SetAccount(a Account) {
 
 // Wrap session functions for trainer sessions
 func (t *TrainerSession) Announce() (*protos.GetMapObjectsResponse, error) {
-	return t.session.Announce(t.context)
+	return t.session.Announce(t.context, t.proxy.Id)
 }
 func (t *TrainerSession) Call(requests []*protos.Request) (*protos.ResponseEnvelope, error) {
-	return t.session.Call(t.context, requests)
+	return t.session.Call(t.context, requests, t.proxy.Id)
 }
 func (t *TrainerSession) GetInventory() (*protos.GetInventoryResponse, error) {
-	return t.session.GetInventory(t.context)
+	return t.session.GetInventory(t.context, t.proxy.Id)
 }
 func (t *TrainerSession) GetPlayer() (*protos.GetPlayerResponse, error) {
-	return t.session.GetPlayer(t.context)
+	return t.session.GetPlayer(t.context, t.proxy.Id)
 }
 func (t *TrainerSession) GetPlayerMap() (*protos.GetMapObjectsResponse, error) {
-	return t.session.GetPlayerMap(t.context)
+	return t.session.GetPlayerMap(t.context, t.proxy.Id)
 }
 func (t *TrainerSession) MoveTo(location *api.Location) {
 	t.location = location
