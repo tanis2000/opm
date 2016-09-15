@@ -3,6 +3,8 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
+	"gopkg.in/mgo.v2/bson"
+
 	"time"
 )
 
@@ -47,11 +49,7 @@ func (c *Client) Send(data []byte) {
 
 //Listen for messages to read
 func (c *Client) readHandler() {
-	defer func() {
-		c.conn.Close()
-		c.Hub.Remove(c.ID)
-		c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
-	}()
+	defer c.handleDisconnect()
 
 	for {
 		_, mes, err := c.conn.ReadMessage()
@@ -68,11 +66,7 @@ func (c *Client) Listen() {
 	ticker := time.NewTicker(pingPeriod)
 
 	go c.readHandler()
-	defer func() {
-		c.conn.Close()
-		c.Hub.Remove(c.ID)
-		c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
-	}()
+	defer c.handleDisconnect()
 
 	for {
 		select {
@@ -89,4 +83,15 @@ func (c *Client) Listen() {
 			}
 		}
 	}
+}
+
+func (c *Client) handleDisconnect() {
+	c.conn.Close()
+	c.Hub.Remove(c.ID)
+
+	db_col := bson.M{"id": c.ID}
+	change := bson.M{"id": c.ID, "dead": true, "use": false}
+	MongoSess.DB("OpenPogoMap").C("Proxy").Update(db_col, change)
+
+	c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
 }

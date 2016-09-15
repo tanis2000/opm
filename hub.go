@@ -28,7 +28,7 @@ func (h *Hub) Remove(proxyID int) {
 
 func (h *Hub) Search(proxyID int) (*Client, error) {
 	val, ok := h.proxies[proxyID]
-    if ok{
+	if ok {
 		return val, nil
 	}
 	return nil, errors.New("Proxy not found")

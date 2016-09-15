@@ -6,12 +6,23 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
-var exitHub *Hub
+const (
+	MongoAddr = "localhost"
+	//MongoUser = ""
+	//MongoPass
+)
+
+var (
+	exitHub        *Hub
+	MongoSess, err = mgo.Dial(MongoAddr)
+)
 
 type Request struct {
 	Meth string `json:"meth"`
@@ -30,6 +41,10 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
+	if err != nil {
+		log.Fatal("Error connecting with mongo!")
+	}
+
 	log.Info("Started the hub")
 
 	exitHub = NewHub()
@@ -84,5 +99,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("New client " + string(newClient.ID))
 	exitHub.Add(newClient)
 
+	bsonMap := bson.M{"id": newClient.ID, "use": false, "dead": false}
+	MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
 	newClient.Listen()
 }
