@@ -1,7 +1,6 @@
 [![POGODEV](https://github.com/pogodevorg/assets/blob/master/public/img/logo-github.png?raw=true)](https://pogodev.org)
 
 # openmap-proxy
-**NOT READY FOR PUBLIC & MAINSTEAM USE: HENCE THE DEVELOP BRANCH!**
 
 ## Table of Contents
 
