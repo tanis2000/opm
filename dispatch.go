@@ -1,8 +1,14 @@
 package main
 
 import (
+    "strconv"
 	"errors"
 	"time"
+    "log"
+
+    "gopkg.in/mgo.v2"
+    "gopkg.in/mgo.v2/bson"
+
 )
 
 // Dispatcher coordinates distribution of proxies and accounts to sessions
@@ -13,10 +19,24 @@ type Dispatcher struct {
 	sessionsOut   chan Session
 	sessionBuffer []Session
 	retryDelay    time.Duration
+    mongoSession  *mgo.Session
+}
+
+type ProxyDB struct{
+    Id int
+    Use bool
+    Dead bool
 }
 
 func NewDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
 	sessionBuffer := sessions
+
+    //TODO Add mongo url in config and check error
+    mongo, err := mgo.Dial("localhost")
+    if err != nil{
+        log.Print("Mongo error!")
+    }
+
 	return &Dispatcher{
 		accounts:      make(chan Account),
 		proxies:       make(chan Proxy),
@@ -24,7 +44,8 @@ func NewDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
 		sessionsOut:   make(chan Session),
 		sessionBuffer: sessionBuffer,
 		retryDelay:    retryDelay,
-	}
+        mongoSession:  mongo,
+    }
 }
 
 // runSessions manages the Session buffer
@@ -86,10 +107,14 @@ func (d *Dispatcher) requestAccount() (Account, error) {
 
 // RequestProxy tries to get a new Proxy from DB
 func (d *Dispatcher) requestProxy() (Proxy, error) {
-	// TODO: Try to get proxy from DB
+    var proxy ProxyDB
+    err := d.mongoSession.DB("OpenPogoMap").C("Proxy").Find(bson.M{"dead" : false}).Select(bson.M{"use" : false}).One(&proxy)
 
-	// Else error
-	return Proxy{}, errors.New("No proxy available.")
+    if err != nil{
+        return Proxy{}, errors.New("No proxy available.")
+    }
+
+    return Proxy{strconv.Itoa(proxy.Id)}, nil
 }
 
 // GetSession gets a session from the queue
@@ -119,7 +144,5 @@ func (d *Dispatcher) GetAccount() Account {
 
 // GetProxy returns a new Proxy
 func (d *Dispatcher) GetProxy() Proxy {
-	// TODO: remove dummy return, when real proxies are ready
-	return Proxy{}
 	return <-d.proxies
 }
