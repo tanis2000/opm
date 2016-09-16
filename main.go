@@ -15,8 +15,6 @@ import (
 
 const (
 	MongoAddr = "localhost"
-	//MongoUser = ""
-	//MongoPass
 )
 
 var (
