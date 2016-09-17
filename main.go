@@ -48,6 +48,7 @@ func main() {
 		if p, err := dispatcher.GetProxy(); err == nil {
 			t.SetProxy(p)
 		} else {
+			t.SetProxy(Proxy{Id: "-1"})
 			log.Println("Not enough proxies for all accounts")
 			break
 		}

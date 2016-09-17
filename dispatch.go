@@ -119,7 +119,7 @@ func (d *Dispatcher) GetAccount() Account {
 // GetProxy returns a new Proxy
 func (d *Dispatcher) GetProxy() (Proxy, error) {
 	var proxy ProxyDB
-	err := d.mongoSession.DB("OpenPogoMap").C("Proxy").Find(bson.M{"dead": false}).Select(bson.M{"use": false}).One(&proxy)
+	err := d.mongoSession.DB("OpenPogoMap").C("Proxy").Find(bson.M{"dead": false, "use": false}).Select(bson.M{"use": false}).One(&proxy)
 	if err != nil {
 		return Proxy{}, errors.New("No proxy available.")
 	}
