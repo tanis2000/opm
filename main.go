@@ -10,7 +10,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -28,6 +27,12 @@ type Request struct {
 	Cont string `json:"cont"`
 	User string `json:"user"`
 	Data string `json:"data"`
+}
+
+type ProxyDB struct{
+    Id int
+    Use bool
+    Dead bool
 }
 
 var upgrader = websocket.Upgrader{
@@ -97,7 +102,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
-	bsonMap := bson.M{"id": newClient.ID, "use": false, "dead": false}
-	MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
+    bsonMap := ProxyDB{Use : false, Dead : false, Id : newClient.ID}
+    MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
 	newClient.Listen()
 }
