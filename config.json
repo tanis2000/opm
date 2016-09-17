@@ -1,18 +1,8 @@
 {
-  "accounts": [
-    {
-      "username": "gertraud",
-      "password": "geheim123",
-      "provider": "ptc"
-    },
-    {
-      "username": "kevin",
-      "password": "leet1998",
-      "provider": "ptc"
-    }
-  ],
-  "listenAddress": ":8000",
-  "gmapsKey": "ACNL03r12nskldnf<S=hn=HsgsdlfLÖASDFnf",
+  "accounts": 57,
+  "listenAddr": ":8000",
+  "gmapsKey": "sadlma8h31rnöASFn",
   "scanDelay": 20,
-  "apiCallRate": 500
+  "apiCallRate": 500,
+  "proxyHost": "http://localhost:8080"
 }
