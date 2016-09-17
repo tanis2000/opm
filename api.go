@@ -28,7 +28,7 @@ func listenAndServe() {
 }
 
 type encounter struct {
-	EncounterId   uint64
+	EncounterId   string
 	PokemonId     int
 	Lat           float64
 	Lng           float64
@@ -36,12 +36,14 @@ type encounter struct {
 }
 
 type pokestop struct {
+	Id    string
 	Lat   float64
 	Lng   float64
 	Lured bool
 }
 
 type gym struct {
+	Id   string
 	Lat  float64
 	Lng  float64
 	Team int
@@ -59,11 +61,14 @@ type ApiResponse struct {
 	Response *mapResult
 }
 
-type PokeDB struct {
-	Type   int
-	Id     int
-	Loc    bson.M
-	Expiry int64
+type DbObject struct {
+	Type      int
+	PokemonId int
+	Id        string
+	Loc       bson.M
+	Expiry    int64
+	Lured     bool
+	Team      int
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,12 +106,22 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			retrySuccess = err == nil
 		}
 	}
-	// Handle account problems
+	// TODO: Handle account problems
 
 	//Save to db
-	for _, v := range result.Encounters {
-		location := bson.M{"type": "Point", "coordinates": []float64{v.Lat, v.Lng}}
-		obj := PokeDB{Type: 1, Id: v.PokemonId, Loc: location, Expiry: v.DisappearTime}
+	for _, pokemon := range result.Encounters {
+		location := bson.M{"type": "Point", "coordinates": []float64{pokemon.Lat, pokemon.Lng}}
+		obj := DbObject{Type: 1, Id: pokemon.EncounterId, PokemonId: pokemon.PokemonId, Loc: location, Expiry: pokemon.DisappearTime}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
+	for _, pokestop := range result.Pokestops {
+		location := bson.M{"type": "Point", "coordinates": []float64{pokestop.Lat, pokestop.Lng}}
+		obj := DbObject{Type: 2, Id: pokestop.Id, Loc: location, Lured: pokestop.Lured}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
+	for _, gym := range result.Gyms {
+		location := bson.M{"type": "Point", "coordinates": []float64{gym.Lat, gym.Lng}}
+		obj := DbObject{Type: 3, Id: gym.Id, Loc: location, Team: gym.Team}
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
 
@@ -165,17 +180,17 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 			tth := p.TimeTillHiddenMs
 			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
 			result.Encounters = append(result.Encounters,
-				encounter{EncounterId: p.EncounterId, PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
+				encounter{EncounterId: strconv.FormatUint(p.EncounterId, 36), PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
 		}
 		// Forts
 		for _, f := range c.Forts {
 			switch f.Type {
 			case protos.FortType_CHECKPOINT:
 				result.Pokestops = append(result.Pokestops,
-					pokestop{Lat: f.Latitude, Lng: f.Longitude, Lured: f.ActiveFortModifier != nil})
+					pokestop{Id: f.Id, Lat: f.Latitude, Lng: f.Longitude, Lured: f.ActiveFortModifier != nil})
 			case protos.FortType_GYM:
 				result.Gyms = append(result.Gyms,
-					gym{Lat: f.Latitude, Lng: f.Longitude, Team: int(f.OwnedByTeam)})
+					gym{Id: f.Id, Lat: f.Latitude, Lng: f.Longitude, Team: int(f.OwnedByTeam)})
 			}
 		}
 	}
