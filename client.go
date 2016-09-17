@@ -35,6 +35,14 @@ type Message struct {
 }
 
 func NewClient(ws *websocket.Conn, h *Hub) *Client {
+	if maxID == 0 {
+		var proxy ProxyDB
+		err := MongoSess.DB("OpenPogoMap").C("Proxy").Find(nil).Select(bson.M{"$max": "id"}).One(&proxy)
+
+		if err == nil {
+			log.Info(proxy.Id)
+		}
+	}
 	maxID++
 	return &Client{maxID, ws, make(chan *Message), make(chan []byte), h}
 }

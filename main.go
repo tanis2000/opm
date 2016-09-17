@@ -31,10 +31,10 @@ type Request struct {
 	Data string `json:"data"`
 }
 
-type ProxyDB struct{
-    Id int
-    Use bool
-    Dead bool
+type ProxyDB struct {
+	Id   int
+	Use  bool
+	Dead bool
 }
 
 var upgrader = websocket.Upgrader{
@@ -104,7 +104,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("New client " + string(newClient.ID))
 	exitHub.Add(newClient)
 
-    bsonMap := ProxyDB{Use : false, Dead : false, Id : newClient.ID}
-    MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
+	bsonMap := ProxyDB{Use: false, Dead: false, Id: newClient.ID}
+	MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
 	newClient.Listen()
 }
