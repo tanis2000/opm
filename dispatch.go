@@ -14,9 +14,9 @@ import (
 type Dispatcher struct {
 	accounts      chan Account
 	proxies       chan Proxy
-	sessionsIn    chan Session
-	sessionsOut   chan Session
-	sessionBuffer []Session
+	sessionsIn    chan *TrainerSession
+	sessionsOut   chan *TrainerSession
+	sessionBuffer []*TrainerSession
 	retryDelay    time.Duration
 	mongoSession  *mgo.Session
 }
@@ -27,24 +27,47 @@ type ProxyDB struct {
 	Dead bool
 }
 
-func NewDispatcher(retryDelay time.Duration, sessions []Session) *Dispatcher {
-	sessionBuffer := sessions
-
+func NewDispatcher(retryDelay time.Duration) *Dispatcher {
 	//TODO Add mongo url in config and check error
 	mongo, err := mgo.Dial("localhost")
 	if err != nil {
 		log.Print("Mongo error!")
 	}
 
-	return &Dispatcher{
+	d := &Dispatcher{
 		accounts:      make(chan Account),
 		proxies:       make(chan Proxy),
-		sessionsIn:    make(chan Session),
-		sessionsOut:   make(chan Session),
-		sessionBuffer: sessionBuffer,
+		sessionsIn:    make(chan *TrainerSession),
+		sessionsOut:   make(chan *TrainerSession),
+		sessionBuffer: nil,
 		retryDelay:    retryDelay,
 		mongoSession:  mongo,
 	}
+
+	// Load accounts from DB
+	accounts := make([]Account, 0)
+
+	for i := 0; i < settings.Accounts; i++ {
+		if a, err := d.GetAccount(); err == nil {
+			accounts = append(accounts, a)
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	// Load sessions
+	trainers := LoadTrainers(accounts, feed, crypto)
+	d.sessionBuffer = trainers
+
+	// Load proxies
+	for _, t := range trainers {
+		if p, err := d.GetProxy(); err == nil {
+			t.SetProxy(p)
+		} else {
+			t.SetProxy(Proxy{Id: "-1"})
+		}
+	}
+	return d
 }
 
 // runSessions manages the Session buffer
@@ -92,28 +115,42 @@ func (d *Dispatcher) requestAccount() (Account, error) {
 }
 
 // GetSession gets a session from the queue
-func (d *Dispatcher) GetSession() Session {
+func (d *Dispatcher) GetSession() *TrainerSession {
 	return <-d.sessionsOut
 }
 
 // QueueSession returns a session to the queue (nonblocking)
-func (d *Dispatcher) QueueSession(s Session) {
-	go func(x Session) {
+func (d *Dispatcher) QueueSession(s *TrainerSession) {
+	go func(x *TrainerSession) {
 		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
 		d.sessionsIn <- x
 	}(s)
 }
 
 // AddSession adds a new Session to the dispatcher
-func (d *Dispatcher) AddSession(s Session) {
-	go func(x Session) {
+func (d *Dispatcher) AddSession(s *TrainerSession) {
+	go func(x *TrainerSession) {
 		d.sessionsIn <- x
 	}(s)
 }
 
 // GetAccount returns a new Account
-func (d *Dispatcher) GetAccount() Account {
-	return <-d.accounts
+func (d *Dispatcher) GetAccount() (Account, error) {
+	// Get account from db
+	var a Account
+	err := d.mongoSession.DB("OpenPogoMap").C("Accounts").Find(bson.M{"used": false, "banned": false}).One(&a)
+	if err != nil {
+		return Account{}, err
+	}
+	// Mark account as used
+	db_col := bson.M{"username": a.Username}
+	a.Used = true
+	err = d.mongoSession.DB("OpenPogoMap").C("Accounts").Update(db_col, a)
+	if err != nil {
+		log.Println(err)
+	}
+	// Return account
+	return a, nil
 }
 
 // GetProxy returns a new Proxy

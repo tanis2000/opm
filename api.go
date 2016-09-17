@@ -98,7 +98,7 @@ func writeApiResponse(w http.ResponseWriter, ok bool, error string, response *ma
 	}
 }
 
-func getMapResult(trainer Session, lat float64, lng float64) (*mapResult, error) {
+func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult, error) {
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)

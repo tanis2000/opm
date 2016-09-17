@@ -12,7 +12,7 @@ import (
 )
 
 type Settings struct {
-	Accounts    []Account
+	Accounts    int
 	ListenAddr  string
 	GmapsKey    string
 	ProxyHost   string
@@ -24,6 +24,8 @@ type Account struct {
 	Username string
 	Password string
 	Provider string
+	Used     bool
+	Banned   bool
 }
 
 type Proxy struct {
@@ -76,8 +78,8 @@ func NewTrainerSession(account Account, location *api.Location, feed api.Feed, c
 }
 
 // LoadTrainers creates TrainerSessions for a slice of Accounts
-func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []Session {
-	trainers := make([]Session, 0)
+func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*TrainerSession {
+	trainers := make([]*TrainerSession, 0)
 	for _, a := range accounts {
 		trainers = append(trainers, NewTrainerSession(a, &api.Location{}, feed, crypto))
 	}

@@ -38,21 +38,10 @@ func main() {
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
-	// Load sessions
-	trainers := LoadTrainers(settings.Accounts, feed, crypto)
 	// Init dispatcher
-	dispatcher = NewDispatcher(time.Second, trainers)
+	dispatcher = NewDispatcher(time.Second)
 	dispatcher.Start()
-	// Load proxies
-	for _, t := range trainers {
-		if p, err := dispatcher.GetProxy(); err == nil {
-			t.SetProxy(p)
-		} else {
-			t.SetProxy(Proxy{Id: "-1"})
-			log.Println("Not enough proxies for all accounts")
-			break
-		}
-	}
+
 	// Create channels
 	ticks = make(chan bool)
 	// Start ticker
