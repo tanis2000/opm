@@ -114,6 +114,8 @@ func (d *Dispatcher) requestProxy() (Proxy, error) {
         return Proxy{}, errors.New("No proxy available.")
     }
 
+    log.Print(proxy.Id)
+
     return Proxy{strconv.Itoa(proxy.Id)}, nil
 }
 
