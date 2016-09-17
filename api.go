@@ -9,25 +9,26 @@ import (
 	"strings"
 	"time"
 
-    "gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2"
-    "github.com/femot/gophermon"
+	"github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var MongoSess *mgo.Session
 
 func listenAndServe() {
-    MongoSess, _ = mgo.Dial("localhost")
+	MongoSess, _ = mgo.Dial("localhost")
 
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
 	// Start listening
-    log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 type encounter struct {
+	EncounterId   uint64
 	PokemonId     int
 	Lat           float64
 	Lng           float64
@@ -58,11 +59,11 @@ type ApiResponse struct {
 	Response *mapResult
 }
 
-type PokeDB struct{
-    Type int
-    Id int
-    Loc bson.M
-    Expiry int64
+type PokeDB struct {
+	Type   int
+	Id     int
+	Loc    bson.M
+	Expiry int64
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,14 +103,14 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Handle account problems
 
-    //Save to db
-    for _, v := range result.Encounters{
-        location := bson.M{"type" : "Point", "coordinates" : []float64{v.Lat, v.Lng}}
-        obj := PokeDB{Type : 1, Id : v.PokemonId, Loc : location, Expiry : v.DisappearTime}
-        MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
-    }
+	//Save to db
+	for _, v := range result.Encounters {
+		location := bson.M{"type": "Point", "coordinates": []float64{v.Lat, v.Lng}}
+		obj := PokeDB{Type: 1, Id: v.PokemonId, Loc: location, Expiry: v.DisappearTime}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
 
-    if err != nil {
+	if err != nil {
 		errString := err.Error()
 		if strings.Contains(errString, "Your username or password is incorrect") {
 			// TODO: something wrong here -> remove from db
@@ -164,7 +165,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 			tth := p.TimeTillHiddenMs
 			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
 			result.Encounters = append(result.Encounters,
-				encounter{PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
+				encounter{EncounterId: p.EncounterId, PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
 		}
 		// Forts
 		for _, f := range c.Forts {
