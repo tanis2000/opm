@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"github.com/femot/pgoapi-go/api"
 	"github.com/femot/pgoapi-go/auth"
@@ -11,7 +12,7 @@ import (
 )
 
 type Settings struct {
-	Accounts    []Account
+	Accounts    int
 	ListenAddr  string
 	GmapsKey    string
 	ProxyHost   string
@@ -23,6 +24,8 @@ type Account struct {
 	Username string
 	Password string
 	Provider string
+	Used     bool
+	Banned   bool
 }
 
 type Proxy struct {
@@ -75,8 +78,8 @@ func NewTrainerSession(account Account, location *api.Location, feed api.Feed, c
 }
 
 // LoadTrainers creates TrainerSessions for a slice of Accounts
-func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []Session {
-	trainers := make([]Session, 0)
+func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*TrainerSession {
+	trainers := make([]*TrainerSession, 0)
 	for _, a := range accounts {
 		trainers = append(trainers, NewTrainerSession(a, &api.Location{}, feed, crypto))
 	}
@@ -102,6 +105,7 @@ func (t *TrainerSession) Login() error {
 }
 
 func (t *TrainerSession) SetProxy(p Proxy) {
+	log.Printf("Using proxy %s for %s", p.Id, t.account.Username)
 	t.proxy = p
 }
 

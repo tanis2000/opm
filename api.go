@@ -6,27 +6,29 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
-    "gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2"
-    "github.com/femot/gophermon"
+	"github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var MongoSess *mgo.Session
 
 func listenAndServe() {
-    MongoSess, _ = mgo.Dial("localhost")
+	MongoSess, _ = mgo.Dial("localhost")
 
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
 	// Start listening
-    log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 type encounter struct {
+	EncounterId   uint64
 	PokemonId     int
 	Lat           float64
 	Lng           float64
@@ -57,11 +59,11 @@ type ApiResponse struct {
 	Response *mapResult
 }
 
-type PokeDB struct{
-    Type int
-    Id int
-    Loc bson.M
-    Expiry int64
+type PokeDB struct {
+	Type   int
+	Id     int
+	Loc    bson.M
+	Expiry int64
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,21 +83,45 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
 	}
+	// Get trainer from queue
+	trainer := dispatcher.GetSession()
+	defer dispatcher.QueueSession(trainer)
+	log.Printf("Using %s for request", trainer.account.Username)
 	// Perform scan
-	result, err := getMapResult(lat, lng)
+	result, err := getMapResult(trainer, lat, lng)
+	// Handle proxy death
+	retrySuccess := false
+	if err == api.ErrProxyDead {
+		var p Proxy
+		p, err = dispatcher.GetProxy()
+		if err == nil {
+			trainer.SetProxy(p)
+			// Retry with new proxy
+			result, err = getMapResult(trainer, lat, lng)
+			retrySuccess = err == nil
+		}
+	}
+	// Handle account problems
 
-    //Save to db
-    for _, v := range result.Encounters{
-        location := bson.M{"type" : "Point", "coordinates" : []float64{v.Lat, v.Lng}}
-        obj := PokeDB{Type : 1, Id : v.PokemonId, Loc : location, Expiry : v.DisappearTime}
-        MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
-    }
+	//Save to db
+	for _, v := range result.Encounters {
+		location := bson.M{"type": "Point", "coordinates": []float64{v.Lat, v.Lng}}
+		obj := PokeDB{Type: 1, Id: v.PokemonId, Loc: location, Expiry: v.DisappearTime}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
 
-    if err != nil {
+	if err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "Your username or password is incorrect") {
+			// TODO: something wrong here -> remove from db
+		}
+	}
+
+	// Final error check
+	if err != nil && !retrySuccess {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
 	}
-
 	writeApiResponse(w, true, "", result)
 }
 
@@ -107,40 +133,22 @@ func writeApiResponse(w http.ResponseWriter, ok bool, error string, response *ma
 	}
 }
 
-func getMapResult(lat float64, lng float64) (*mapResult, error) {
-	// Get trainer from queue
-	trainer := dispatcher.GetSession()
-	defer dispatcher.QueueSession(trainer)
+func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult, error) {
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)
 	// Set accuracy and altitude
 	gophermon.SetRandomAccuracy(location)
-	err := gophermon.SetCorrectAltitudes([]*api.Location{location}, settings.GmapsKey)
-	if err != nil {
-		return &mapResult{}, err
-	}
 	// Login trainer
-	err = trainer.Login()
+	err := trainer.Login()
 	if err != nil {
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
+	log.Println("Getting player map")
 	mapObjects, err := trainer.GetPlayerMap()
-	// Handle proxy death/ip bans
-	if err == api.ErrProxyDead || err == api.ErrIpSoftBanned {
-		// Get new proxy
-		trainer.SetProxy(dispatcher.GetProxy())
-		// Retry with new proxy
-		mapObjects, err = trainer.GetPlayerMap()
-	}
-	// Handle account ban
-	if err == api.ErrAccountBanned {
-		a := dispatcher.GetAccount()
-		trainer.SetAccount(a)
-		mapObjects, err = trainer.GetPlayerMap()
-	}
+	log.Printf("Got player map (Error: %s)\n", err.Error())
 	if err != nil && err != api.ErrNewRPCURL {
 		return &mapResult{}, err
 	}
@@ -157,7 +165,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 			tth := p.TimeTillHiddenMs
 			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
 			result.Encounters = append(result.Encounters,
-				encounter{PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
+				encounter{EncounterId: p.EncounterId, PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
 		}
 		// Forts
 		for _, f := range c.Forts {

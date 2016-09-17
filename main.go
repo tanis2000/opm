@@ -17,6 +17,7 @@ var crypto api.Crypto
 var dispatcher *Dispatcher
 
 func main() {
+	log.SetFlags(log.Lmicroseconds)
 	// Check command line flags
 	if len(os.Args) == 3 {
 		if os.Args[1] == "test" {
@@ -38,15 +39,10 @@ func main() {
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
-	// Load sessions
-	trainers := LoadTrainers(settings.Accounts, feed, crypto)
 	// Init dispatcher
-	dispatcher = NewDispatcher(time.Second, trainers)
+	dispatcher = NewDispatcher(time.Second)
 	dispatcher.Start()
-	// Load proxies
-	for _, t := range trainers {
-		t.SetProxy(dispatcher.GetProxy())
-	}
+
 	// Create channels
 	ticks = make(chan bool)
 	// Start ticker
