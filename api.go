@@ -9,16 +9,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/gophermon"
+    "gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2"
+    "github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
 )
 
+var MongoSess *mgo.Session
+
 func listenAndServe() {
+    MongoSess, _ = mgo.Dial("localhost")
+
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
 	// Start listening
-	log.Fatal(http.ListenAndServe(settings.ListenAddr, nil))
+    log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 type encounter struct {
@@ -50,6 +56,13 @@ type ApiResponse struct {
 	Ok       bool
 	Error    string
 	Response *mapResult
+}
+
+type PokeDB struct{
+    Type int
+    Id int
+    Loc bson.M
+    Expiry int64
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +101,15 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Handle account problems
-	if err != nil {
+
+    //Save to db
+    for _, v := range result.Encounters{
+        location := bson.M{"type" : "Point", "coordinates" : []float64{v.Lat, v.Lng}}
+        obj := PokeDB{Type : 1, Id : v.PokemonId, Loc : location, Expiry : v.DisappearTime}
+        MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+    }
+
+    if err != nil {
 		errString := err.Error()
 		if strings.Contains(errString, "Your username or password is incorrect") {
 			// TODO: something wrong here -> remove from db
