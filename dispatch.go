@@ -64,7 +64,7 @@ func NewDispatcher(retryDelay time.Duration) *Dispatcher {
 		if p, err := d.GetProxy(); err == nil {
 			t.SetProxy(p)
 		} else {
-			t.SetProxy(Proxy{Id: "-1"})
+			t.SetProxy(Proxy{Id: "0"})
 		}
 	}
 	return d

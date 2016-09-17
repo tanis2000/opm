@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/femot/gophermon"
@@ -71,18 +72,30 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Get trainer from queue
 	trainer := dispatcher.GetSession()
 	defer dispatcher.QueueSession(trainer)
+	log.Printf("Using %s for request", trainer.account.Username)
 	// Perform scan
 	result, err := getMapResult(trainer, lat, lng)
 	// Handle proxy death
 	retrySuccess := false
 	if err == api.ErrProxyDead {
-		if p, err := dispatcher.GetProxy(); err == nil {
+		var p Proxy
+		p, err = dispatcher.GetProxy()
+		if err == nil {
 			trainer.SetProxy(p)
 			// Retry with new proxy
 			result, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
 		}
 	}
+	// Handle account problems
+	if err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "Your username or password is incorrect") {
+			// TODO: something wrong here -> remove from db
+		}
+	}
+
+	// Final error check
 	if err != nil && !retrySuccess {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
@@ -104,18 +117,16 @@ func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult
 	trainer.MoveTo(location)
 	// Set accuracy and altitude
 	gophermon.SetRandomAccuracy(location)
-	err := gophermon.SetCorrectAltitudes([]*api.Location{location}, settings.GmapsKey)
-	if err != nil {
-		return &mapResult{}, err
-	}
 	// Login trainer
-	err = trainer.Login()
+	err := trainer.Login()
 	if err != nil {
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
+	log.Println("Getting player map")
 	mapObjects, err := trainer.GetPlayerMap()
+	log.Printf("Got player map (Error: %s)\n", err.Error())
 	if err != nil && err != api.ErrNewRPCURL {
 		return &mapResult{}, err
 	}

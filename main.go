@@ -17,6 +17,7 @@ var crypto api.Crypto
 var dispatcher *Dispatcher
 
 func main() {
+	log.SetFlags(log.Lmicroseconds)
 	// Check command line flags
 	if len(os.Args) == 3 {
 		if os.Args[1] == "test" {
