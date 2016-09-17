@@ -68,7 +68,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	proxy, err := exitHub.Search(id)
 	if err != nil {
-		log.Error("Invalid proxy_id!")
+		log.Errorf("Invalid proxy_id! %d", id)
 		http.Error(w, `Internal Error`, http.StatusBadRequest)
 		return
 	}
@@ -94,7 +94,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	var newClient = NewClient(conn, exitHub)
-	log.Info("New client " + string(newClient.ID))
+	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
 	bsonMap := bson.M{"id": newClient.ID, "use": false, "dead": false}

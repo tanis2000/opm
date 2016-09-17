@@ -54,7 +54,7 @@ func (c *Client) readHandler() {
 	for {
 		_, mes, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Info("Listener: client disconnected " + string(c.ID))
+			log.Infof("Listener: client disconnected %d", c.ID)
 			break
 		}
 		c.Response <- &Message{mes, c, time.Now().Unix()}
