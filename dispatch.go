@@ -77,22 +77,9 @@ func (d *Dispatcher) runAccounts() {
 	}
 }
 
-// runProxies continuously requests new proxies from the DB
-func (d *Dispatcher) runProxies() {
-	for {
-		// TODO: inline request
-		if p, err := d.requestProxy(); err == nil {
-			d.proxies <- p
-		} else {
-			time.Sleep(time.Duration(d.retryDelay) * time.Second)
-		}
-	}
-}
-
 // start starts runSessions, runAccounts and runProxies as goroutines
 func (d *Dispatcher) Start() {
 	go d.runAccounts()
-	go d.runProxies()
 	go d.runSessions()
 }
 
@@ -102,18 +89,6 @@ func (d *Dispatcher) requestAccount() (Account, error) {
 
 	// Else error
 	return Account{}, errors.New("No account available.")
-}
-
-// RequestProxy tries to get a new Proxy from DB
-func (d *Dispatcher) requestProxy() (Proxy, error) {
-	var proxy ProxyDB
-	err := d.mongoSession.DB("OpenPogoMap").C("Proxy").Find(bson.M{"dead": false}).Select(bson.M{"use": false}).One(&proxy)
-
-	if err != nil {
-		return Proxy{}, errors.New("No proxy available.")
-	}
-
-	return Proxy{strconv.Itoa(proxy.Id)}, nil
 }
 
 // GetSession gets a session from the queue
@@ -142,6 +117,16 @@ func (d *Dispatcher) GetAccount() Account {
 }
 
 // GetProxy returns a new Proxy
-func (d *Dispatcher) GetProxy() Proxy {
-	return <-d.proxies
+func (d *Dispatcher) GetProxy() (Proxy, error) {
+	var proxy ProxyDB
+	err := d.mongoSession.DB("OpenPogoMap").C("Proxy").Find(bson.M{"dead": false}).Select(bson.M{"use": false}).One(&proxy)
+	if err != nil {
+		return Proxy{}, errors.New("No proxy available.")
+	}
+	// Mark proxy as used
+	db_col := bson.M{"id": proxy.Id}
+	change := ProxyDB{Id: proxy.Id, Dead: false, Use: true}
+	d.mongoSession.DB("OpenPogoMap").C("Proxy").Update(db_col, change)
+
+	return Proxy{strconv.Itoa(proxy.Id)}, nil
 }

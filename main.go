@@ -45,7 +45,12 @@ func main() {
 	dispatcher.Start()
 	// Load proxies
 	for _, t := range trainers {
-		t.SetProxy(dispatcher.GetProxy())
+		if p, err := dispatcher.GetProxy(); err == nil {
+			t.SetProxy(p)
+		} else {
+			log.Println("Not enough proxies for all accounts")
+			break
+		}
 	}
 	// Create channels
 	ticks = make(chan bool)

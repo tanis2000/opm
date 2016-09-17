@@ -68,13 +68,25 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
 	}
+	// Get trainer from queue
+	trainer := dispatcher.GetSession()
+	defer dispatcher.QueueSession(trainer)
 	// Perform scan
-	result, err := getMapResult(lat, lng)
-	if err != nil {
+	result, err := getMapResult(trainer, lat, lng)
+	// Handle proxy death
+	retrySuccess := false
+	if err == api.ErrProxyDead {
+		if p, err := dispatcher.GetProxy(); err == nil {
+			trainer.SetProxy(p)
+			// Retry with new proxy
+			result, err = getMapResult(trainer, lat, lng)
+			retrySuccess = err == nil
+		}
+	}
+	if err != nil && !retrySuccess {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
 	}
-
 	writeApiResponse(w, true, "", result)
 }
 
@@ -86,10 +98,7 @@ func writeApiResponse(w http.ResponseWriter, ok bool, error string, response *ma
 	}
 }
 
-func getMapResult(lat float64, lng float64) (*mapResult, error) {
-	// Get trainer from queue
-	trainer := dispatcher.GetSession()
-	defer dispatcher.QueueSession(trainer)
+func getMapResult(trainer Session, lat float64, lng float64) (*mapResult, error) {
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)
@@ -107,19 +116,6 @@ func getMapResult(lat float64, lng float64) (*mapResult, error) {
 	// Query api
 	<-ticks
 	mapObjects, err := trainer.GetPlayerMap()
-	// Handle proxy death/ip bans
-	if err == api.ErrProxyDead || err == api.ErrIpSoftBanned {
-		// Get new proxy
-		trainer.SetProxy(dispatcher.GetProxy())
-		// Retry with new proxy
-		mapObjects, err = trainer.GetPlayerMap()
-	}
-	// Handle account ban
-	if err == api.ErrAccountBanned {
-		a := dispatcher.GetAccount()
-		trainer.SetAccount(a)
-		mapObjects, err = trainer.GetPlayerMap()
-	}
 	if err != nil && err != api.ErrNewRPCURL {
 		return &mapResult{}, err
 	}

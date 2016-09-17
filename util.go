@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"github.com/femot/pgoapi-go/api"
 	"github.com/femot/pgoapi-go/auth"
@@ -102,6 +103,7 @@ func (t *TrainerSession) Login() error {
 }
 
 func (t *TrainerSession) SetProxy(p Proxy) {
+	log.Printf("Using proxy %s for %s", p.Id, t.account.Username)
 	t.proxy = p
 }
 
