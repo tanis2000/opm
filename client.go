@@ -90,7 +90,7 @@ func (c *Client) handleDisconnect() {
 	c.Hub.Remove(c.ID)
 
 	db_col := bson.M{"id": c.ID}
-	change := bson.M{"id": c.ID, "dead": true, "use": false}
+	change := ProxyDB{Id: c.ID, Dead: true, Use: false}
 	MongoSess.DB("OpenPogoMap").C("Proxy").Update(db_col, change)
 
 	c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
