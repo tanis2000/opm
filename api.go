@@ -157,14 +157,14 @@ func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult
 	// Login trainer
 	err := trainer.Login()
 	if err != nil {
+		log.Printf("Login error (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
-	log.Println("Getting player map")
 	mapObjects, err := trainer.GetPlayerMap()
-	log.Printf("Got player map (Error: %s)\n", err.Error())
 	if err != nil && err != api.ErrNewRPCURL {
+		log.Printf("Error getting map objects (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
 		return &mapResult{}, err
 	}
 	// Parse and return result

@@ -1,8 +1,8 @@
 {
-  "accounts": 57,
+  "accounts": 650,
   "listenAddr": ":8000",
   "gmapsKey": "sadlma8h31rnöASFn",
   "scanDelay": 20,
-  "apiCallRate": 500,
+  "apiCallRate": 100,
   "proxyHost": "http://localhost:8080"
 }

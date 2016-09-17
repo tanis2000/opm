@@ -51,7 +51,7 @@ func NewDispatcher(retryDelay time.Duration) *Dispatcher {
 		if a, err := d.GetAccount(); err == nil {
 			accounts = append(accounts, a)
 		} else {
-			log.Fatal(err)
+			log.Fatal("Not enough accounts")
 		}
 	}
 
