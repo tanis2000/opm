@@ -14,7 +14,6 @@ import (
 type Settings struct {
 	Accounts    int
 	ListenAddr  string
-	GmapsKey    string
 	ProxyHost   string
 	ScanDelay   int // Time between scans per account in seconds
 	ApiCallRate int // Time between API calls in milliseconds
