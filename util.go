@@ -14,7 +14,6 @@ import (
 type Settings struct {
 	Accounts    int
 	ListenAddr  string
-	GmapsKey    string
 	ProxyHost   string
 	ScanDelay   int // Time between scans per account in seconds
 	ApiCallRate int // Time between API calls in milliseconds
@@ -55,14 +54,15 @@ type Session interface {
 }
 
 type TrainerSession struct {
-	account   Account
-	context   context.Context
-	crypto    api.Crypto
-	failCount int
-	feed      api.Feed
-	location  *api.Location
-	proxy     Proxy
-	session   *api.Session
+	account    Account
+	context    context.Context
+	crypto     api.Crypto
+	failCount  int
+	feed       api.Feed
+	location   *api.Location
+	proxy      Proxy
+	session    *api.Session
+	forceLogin bool
 }
 
 func NewTrainerSession(account Account, location *api.Location, feed api.Feed, crypto api.Crypto) *TrainerSession {
@@ -88,9 +88,10 @@ func LoadTrainers(accounts []Account, feed api.Feed, crypto api.Crypto) []*Train
 
 // Login initializes a (new) session. This can be used to login again, after the session is expired.
 func (t *TrainerSession) Login() error {
-	if !t.session.IsExpired() {
+	if !t.session.IsExpired() && !t.forceLogin {
 		return nil
 	}
+	t.forceLogin = false
 	provider, err := auth.NewProvider(t.account.Provider, t.account.Username, t.account.Password)
 	if err != nil {
 		return err

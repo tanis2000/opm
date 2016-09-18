@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/femot/pgoapi-go/api"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -51,7 +52,7 @@ func NewDispatcher(retryDelay time.Duration) *Dispatcher {
 		if a, err := d.GetAccount(); err == nil {
 			accounts = append(accounts, a)
 		} else {
-			log.Fatal(err)
+			log.Fatal("Not enough accounts")
 		}
 	}
 
@@ -87,22 +88,8 @@ func (d *Dispatcher) runSessions() {
 	}
 }
 
-// runAccounts continuously requests new accounts from the DB
-func (d *Dispatcher) runAccounts() {
-	for {
-		// TODO: inline request
-		if a, err := d.requestAccount(); err == nil {
-			d.accounts <- a
-		} else {
-			time.Sleep(d.retryDelay)
-		}
-
-	}
-}
-
 // start starts runSessions, runAccounts and runProxies as goroutines
 func (d *Dispatcher) Start() {
-	go d.runAccounts()
 	go d.runSessions()
 }
 
@@ -121,9 +108,25 @@ func (d *Dispatcher) GetSession() *TrainerSession {
 
 // QueueSession returns a session to the queue (nonblocking)
 func (d *Dispatcher) QueueSession(s *TrainerSession) {
-	go func(x *TrainerSession) {
+	if s.account.Banned {
+		log.Printf("Account %s marked as banned. Not requeuing!", s.account.Username)
+		// Put new session in queue
+		go func() {
+			for {
+				if a, err := d.GetAccount(); err == nil {
+					log.Printf("Queuing new account: %s", a.Username)
+					d.sessionsIn <- NewTrainerSession(a, &api.Location{}, feed, crypto)
+					return
+				}
+				// Wait before retry
+				time.Sleep(10 * time.Second)
+			}
+		}()
+		return
+	}
+	go func(t *TrainerSession) {
 		time.Sleep(time.Duration(settings.ScanDelay) * time.Second)
-		d.sessionsIn <- x
+		d.sessionsIn <- t
 	}(s)
 }
 

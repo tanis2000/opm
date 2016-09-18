@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
 	"gopkg.in/mgo.v2"
@@ -28,7 +27,7 @@ func listenAndServe() {
 }
 
 type encounter struct {
-	EncounterId   uint64
+	EncounterId   string
 	PokemonId     int
 	Lat           float64
 	Lng           float64
@@ -36,12 +35,14 @@ type encounter struct {
 }
 
 type pokestop struct {
+	Id    string
 	Lat   float64
 	Lng   float64
 	Lured bool
 }
 
 type gym struct {
+	Id   string
 	Lat  float64
 	Lng  float64
 	Team int
@@ -59,11 +60,14 @@ type ApiResponse struct {
 	Response *mapResult
 }
 
-type PokeDB struct {
-	Type   int
-	Id     int
-	Loc    bson.M
-	Expiry int64
+type DbObject struct {
+	Type      int
+	PokemonId int
+	Id        string
+	Loc       bson.M
+	Expiry    int64
+	Lured     bool
+	Team      int
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,11 +90,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Get trainer from queue
 	trainer := dispatcher.GetSession()
 	defer dispatcher.QueueSession(trainer)
-	log.Printf("Using %s for request", trainer.account.Username)
+	log.Printf("Using %s for request (%f,%f)", trainer.account.Username, lat, lng)
 	// Perform scan
 	result, err := getMapResult(trainer, lat, lng)
-	// Handle proxy death
+	// Error handling
 	retrySuccess := false
+	// Handle proxy death
 	if err == api.ErrProxyDead {
 		var p Proxy
 		p, err = dispatcher.GetProxy()
@@ -101,26 +106,37 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			retrySuccess = err == nil
 		}
 	}
-	// Handle account problems
-
-	//Save to db
-	for _, v := range result.Encounters {
-		location := bson.M{"type": "Point", "coordinates": []float64{v.Lat, v.Lng}}
-		obj := PokeDB{Type: 1, Id: v.PokemonId, Loc: location, Expiry: v.DisappearTime}
-		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
-	}
-
+	// Account problems
 	if err != nil {
 		errString := err.Error()
-		if strings.Contains(errString, "Your username or password is incorrect") {
-			// TODO: something wrong here -> remove from db
+		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned {
+			trainer.account.Banned = true
 		}
 	}
-
+	// Just retry when this error comes
+	if err == api.ErrInvalidPlatformRequest {
+		result, err = getMapResult(trainer, lat, lng)
+	}
 	// Final error check
 	if err != nil && !retrySuccess {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
 		return
+	}
+	//Save to db
+	for _, pokemon := range result.Encounters {
+		location := bson.M{"type": "Point", "coordinates": []float64{pokemon.Lat, pokemon.Lng}}
+		obj := DbObject{Type: 1, Id: pokemon.EncounterId, PokemonId: pokemon.PokemonId, Loc: location, Expiry: pokemon.DisappearTime}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
+	for _, pokestop := range result.Pokestops {
+		location := bson.M{"type": "Point", "coordinates": []float64{pokestop.Lat, pokestop.Lng}}
+		obj := DbObject{Type: 2, Id: pokestop.Id, Loc: location, Lured: pokestop.Lured}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
+	}
+	for _, gym := range result.Gyms {
+		location := bson.M{"type": "Point", "coordinates": []float64{gym.Lat, gym.Lng}}
+		obj := DbObject{Type: 3, Id: gym.Id, Loc: location, Team: gym.Team}
+		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
 	writeApiResponse(w, true, "", result)
 }
@@ -137,19 +153,25 @@ func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)
-	// Set accuracy and altitude
-	gophermon.SetRandomAccuracy(location)
 	// Login trainer
 	err := trainer.Login()
+	if err == api.ErrInvalidAuthToken {
+		trainer.forceLogin = true
+		err = trainer.Login()
+	}
 	if err != nil {
+		if err != api.ErrProxyDead {
+			log.Printf("Login error (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		}
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
-	log.Println("Getting player map")
 	mapObjects, err := trainer.GetPlayerMap()
-	log.Printf("Got player map (Error: %s)\n", err.Error())
 	if err != nil && err != api.ErrNewRPCURL {
+		if err != api.ErrProxyDead {
+			log.Printf("Error getting map objects (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		}
 		return &mapResult{}, err
 	}
 	// Parse and return result
@@ -165,17 +187,17 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) *mapResult {
 			tth := p.TimeTillHiddenMs
 			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
 			result.Encounters = append(result.Encounters,
-				encounter{EncounterId: p.EncounterId, PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
+				encounter{EncounterId: strconv.FormatUint(p.EncounterId, 36), PokemonId: int(p.PokemonData.PokemonId), Lat: p.Latitude, Lng: p.Longitude, DisappearTime: bestBefore})
 		}
 		// Forts
 		for _, f := range c.Forts {
 			switch f.Type {
 			case protos.FortType_CHECKPOINT:
 				result.Pokestops = append(result.Pokestops,
-					pokestop{Lat: f.Latitude, Lng: f.Longitude, Lured: f.ActiveFortModifier != nil})
+					pokestop{Id: f.Id, Lat: f.Latitude, Lng: f.Longitude, Lured: f.ActiveFortModifier != nil})
 			case protos.FortType_GYM:
 				result.Gyms = append(result.Gyms,
-					gym{Lat: f.Latitude, Lng: f.Longitude, Team: int(f.OwnedByTeam)})
+					gym{Id: f.Id, Lat: f.Latitude, Lng: f.Longitude, Team: int(f.OwnedByTeam)})
 			}
 		}
 	}
