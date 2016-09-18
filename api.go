@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/gophermon"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
 	"gopkg.in/mgo.v2"
@@ -91,11 +90,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Get trainer from queue
 	trainer := dispatcher.GetSession()
 	defer dispatcher.QueueSession(trainer)
-	log.Printf("Using %s for request", trainer.account.Username)
+	log.Printf("Using %s for request (%f,%f)", trainer.account.Username, lat, lng)
 	// Perform scan
 	result, err := getMapResult(trainer, lat, lng)
-	// Handle proxy death
+	// Error handling
 	retrySuccess := false
+	// Handle proxy death
 	if err == api.ErrProxyDead {
 		var p Proxy
 		p, err = dispatcher.GetProxy()
@@ -106,8 +106,22 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			retrySuccess = err == nil
 		}
 	}
-	// TODO: Handle account problems
-
+	// Account problems
+	if err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned {
+			trainer.account.Banned = true
+		}
+	}
+	// Just retry when this error comes
+	if err == api.ErrInvalidPlatformRequest {
+		result, err = getMapResult(trainer, lat, lng)
+	}
+	// Final error check
+	if err != nil && !retrySuccess {
+		writeApiResponse(w, false, err.Error(), &mapResult{})
+		return
+	}
 	//Save to db
 	for _, pokemon := range result.Encounters {
 		location := bson.M{"type": "Point", "coordinates": []float64{pokemon.Lat, pokemon.Lng}}
@@ -124,19 +138,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		obj := DbObject{Type: 3, Id: gym.Id, Loc: location, Team: gym.Team}
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
-
-	if err != nil {
-		errString := err.Error()
-		if strings.Contains(errString, "Your username or password is incorrect") {
-			// TODO: something wrong here -> remove from db
-		}
-	}
-
-	// Final error check
-	if err != nil && !retrySuccess {
-		writeApiResponse(w, false, err.Error(), &mapResult{})
-		return
-	}
 	writeApiResponse(w, true, "", result)
 }
 
@@ -152,19 +153,25 @@ func getMapResult(trainer *TrainerSession, lat float64, lng float64) (*mapResult
 	// Set location
 	location := &api.Location{Lat: lat, Lon: lng}
 	trainer.MoveTo(location)
-	// Set accuracy and altitude
-	gophermon.SetRandomAccuracy(location)
 	// Login trainer
 	err := trainer.Login()
+	if err == api.ErrInvalidAuthToken {
+		trainer.forceLogin = true
+		err = trainer.Login()
+	}
 	if err != nil {
-		log.Printf("Login error (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		if err != api.ErrProxyDead {
+			log.Printf("Login error (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		}
 		return &mapResult{}, err
 	}
 	// Query api
 	<-ticks
 	mapObjects, err := trainer.GetPlayerMap()
 	if err != nil && err != api.ErrNewRPCURL {
-		log.Printf("Error getting map objects (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		if err != api.ErrProxyDead {
+			log.Printf("Error getting map objects (%s):\n\t\t%s\n", trainer.account.Username, err.Error())
+		}
 		return &mapResult{}, err
 	}
 	// Parse and return result
