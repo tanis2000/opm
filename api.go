@@ -151,7 +151,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Error handling
 	retrySuccess := false
 	// Handle proxy death
-	if err == api.ErrProxyDead {
+	if err.Error() == api.ErrProxyDead.Error() {
 		var p Proxy
 		p, err = dispatcher.GetProxy()
 		if err == nil {
