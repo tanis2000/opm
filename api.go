@@ -19,9 +19,14 @@ var MongoSess *mgo.Session
 
 func listenAndServe() {
 	MongoSess, _ = mgo.Dial("localhost")
+	//Add loc ad a 2dsphere
+	MongoSess.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{
+		Unique: true,
+	})
 
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
+	http.HandleFunc("/c", cacheHandler)
 	// Start listening
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
@@ -70,6 +75,33 @@ type DbObject struct {
 	Team      int
 }
 
+func cacheHandler(w http.ResponseWriter, r *http.Request) {
+	// Check method
+	if r.Method != "POST" {
+		writeApiResponse(w, false, errors.New("Wrong method").Error(), &mapResult{})
+		return
+	}
+	// Get Latitude and Longitude
+	lat, err := strconv.ParseFloat(r.FormValue("lat"), 64)
+	if err != nil {
+		writeApiResponse(w, false, err.Error(), &mapResult{})
+		return
+	}
+	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
+	if err != nil {
+		writeApiResponse(w, false, err.Error(), &mapResult{})
+	}
+
+	//2dsphere query
+	loc := bson.M{"$geometry": bson.M{"type": "Point", "coordinates": []float64{lng, lat}}, "$maxDistance": 400}
+	query := bson.M{"loc": bson.M{"$near": loc}}
+	var objects []DbObject
+	found := MongoSess.DB("OpenPogoMap").C("Objects").Find(query).All(&objects)
+
+	//Create response
+	log.Print(found)
+}
+
 func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Check method
 	if r.Method != "POST" {
@@ -85,7 +117,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
 		writeApiResponse(w, false, err.Error(), &mapResult{})
-		return
 	}
 	// Get trainer from queue
 	trainer := dispatcher.GetSession()
@@ -124,7 +155,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//Save to db
 	for _, pokemon := range result.Encounters {
-		location := bson.M{"type": "Point", "coordinates": []float64{pokemon.Lat, pokemon.Lng}}
+		location := bson.M{"type": "Point", "coordinates": []float64{pokemon.Lng, pokemon.Lat}}
 		obj := DbObject{Type: 1, Id: pokemon.EncounterId, PokemonId: pokemon.PokemonId, Loc: location, Expiry: pokemon.DisappearTime}
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
