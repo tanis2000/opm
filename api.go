@@ -20,9 +20,12 @@ var MongoSess *mgo.Session
 func listenAndServe() {
 	MongoSess, _ = mgo.Dial("localhost")
 	//Add loc ad a 2dsphere
-	MongoSess.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{
-		Unique: true,
+	err := MongoSess.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{
+		Key: []string{"$2dsphere:loc"},
 	})
+	if err != nil {
+		log.Println(err)
+	}
 
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
@@ -75,31 +78,52 @@ type DbObject struct {
 	Team      int
 }
 
+type CacheResponse struct {
+	Ok       bool
+	Error    string
+	Response []DbObject
+}
+
 func cacheHandler(w http.ResponseWriter, r *http.Request) {
+	var objects []DbObject
 	// Check method
 	if r.Method != "POST" {
-		writeApiResponse(w, false, errors.New("Wrong method").Error(), &mapResult{})
+		writeCacheResponse(w, false, errors.New("Wrong method").Error(), objects)
 		return
 	}
 	// Get Latitude and Longitude
 	lat, err := strconv.ParseFloat(r.FormValue("lat"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), &mapResult{})
+		writeCacheResponse(w, false, err.Error(), objects)
 		return
 	}
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), &mapResult{})
+		writeCacheResponse(w, false, err.Error(), objects)
+	}
+	// 2dsphere query
+	loc := bson.M{
+		"$geometry": bson.M{
+			"type":        "Point",
+			"coordinates": []float64{lng, lat}},
+		"$maxDistance": 400,
+	}
+	query := bson.M{"loc": bson.M{"$near": loc}}
+	err = MongoSess.DB("OpenPogoMap").C("Objects").Find(query).All(&objects)
+	if err != nil {
+		writeCacheResponse(w, false, "Query failed", objects)
+		log.Println(err)
+	}
+	writeCacheResponse(w, true, "", objects)
+}
+
+func writeCacheResponse(w http.ResponseWriter, ok bool, error string, response []DbObject) {
+	r := CacheResponse{Ok: ok, Error: error, Response: response}
+	err := json.NewEncoder(w).Encode(r)
+	if err != nil {
+		log.Println(err)
 	}
 
-	//2dsphere query
-	loc := bson.M{"$geometry": bson.M{"type": "Point", "coordinates": []float64{lng, lat}}, "$maxDistance": 400}
-	query := bson.M{"loc": bson.M{"$near": loc}}
-	var objects []DbObject
-	found := MongoSess.DB("OpenPogoMap").C("Objects").Find(query).All(&objects)
-
-	//Create response
-	log.Print(found)
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,12 +184,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
 	for _, pokestop := range result.Pokestops {
-		location := bson.M{"type": "Point", "coordinates": []float64{pokestop.Lat, pokestop.Lng}}
+		location := bson.M{"type": "Point", "coordinates": []float64{pokestop.Lng, pokestop.Lat}}
 		obj := DbObject{Type: 2, Id: pokestop.Id, Loc: location, Lured: pokestop.Lured}
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
 	for _, gym := range result.Gyms {
-		location := bson.M{"type": "Point", "coordinates": []float64{gym.Lat, gym.Lng}}
+		location := bson.M{"type": "Point", "coordinates": []float64{gym.Lng, gym.Lat}}
 		obj := DbObject{Type: 3, Id: gym.Id, Loc: location, Team: gym.Team}
 		MongoSess.DB("OpenPogoMap").C("Objects").Insert(obj)
 	}
