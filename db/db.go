@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/femot/openmap-tools/opm"
 	"gopkg.in/mgo.v2"
@@ -113,17 +114,23 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 // GetMapObjects returns all objects within a radius (in meters) of the given lat/lng
 func (db *OpenMapDb) GetMapObjects(lat, lng float64, radius int) ([]opm.MapObject, error) {
 	// Build query
-	// TODO: filter expiry
-	loc := bson.M{
-		"$geometry": bson.M{
-			"type":        "Point",
-			"coordinates": []float64{lng, lat}},
-		"$maxDistance": radius,
+	q := bson.M{
+		"loc": bson.M{
+			"$near": bson.M{
+				"$geometry": bson.M{
+					"type":        "Point",
+					"coordinates": []float64{lng, lat}},
+				"$maxDistance": radius,
+			},
+		},
+		"$or": []bson.M{
+			{"expiry": bson.M{"$gt": time.Now().Unix()}},
+			{"expiry": 0},
+		},
 	}
-	query := bson.M{"loc": bson.M{"$near": loc}}
 	var objects []object
 	// Query db
-	err := db.mongoSession.DB("OpenPogoMap").C("Objects").Find(query).All(&objects)
+	err := db.mongoSession.DB("OpenPogoMap").C("Objects").Find(q).All(&objects)
 	if err != nil {
 		return nil, err
 	}
