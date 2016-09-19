@@ -127,7 +127,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Account problems
 	if err != nil {
 		errString := err.Error()
-		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned {
+		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned || err.Error() == "Empty Response" || strings.Contains(errString, "not yet active") {
+			log.Printf("Account %s banned", trainer.Account.Username)
 			trainer.Account.Banned = true
 		}
 	}
