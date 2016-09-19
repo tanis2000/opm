@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+
+	"github.com/femot/openmap-tools/util"
+	"github.com/femot/pgoapi-go/api"
 )
 
 type Settings struct {
@@ -29,4 +32,19 @@ func loadSettings() (Settings, error) {
 		return settings, err
 	}
 	return settings, err
+}
+
+func NewTrainerFromDb() (*util.TrainerSession, error) {
+	p, err := database.GetProxy()
+	if err != nil {
+		return &util.TrainerSession{}, ErrBusy
+	}
+	a, err := database.GetAccount()
+	if err != nil {
+		database.ReturnProxy(p)
+		return &util.TrainerSession{}, ErrBusy
+	}
+	trainer := util.NewTrainerSession(a, &api.Location{}, feed, crypto)
+	trainer.SetProxy(p)
+	return trainer, nil
 }

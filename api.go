@@ -15,6 +15,8 @@ import (
 	"github.com/pogodevorg/POGOProtos-go"
 )
 
+var ErrBusy = errors.New("All our minions are busy. Try again later.")
+
 func listenAndServe() {
 	// Setup routes
 	http.HandleFunc("/q", requestHandler)
@@ -82,7 +84,23 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		writeApiResponse(w, false, err.Error(), nil)
 	}
 	// Get trainer from queue
-	trainer := trainerQueue.Get()
+	trainer, err := trainerQueue.Get(5 * time.Second)
+	if err != nil {
+		// Timeout -> try setup a new one
+		p, err := database.GetProxy()
+		if err != nil {
+			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			return
+		}
+		a, err := database.GetAccount()
+		if err != nil {
+			database.ReturnProxy(p)
+			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			return
+		}
+		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
+		trainer.SetProxy(p)
+	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
 	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
 	// Perform scan
@@ -90,7 +108,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Error handling
 	retrySuccess := false
 	// Handle proxy death
-	if err != nil && err.Error() == api.ErrProxyDead.Error() {
+	if err != nil && err == api.ErrProxyDead {
+		trainer.Proxy.Dead = true
 		var p opm.Proxy
 		p, err = database.GetProxy()
 		if err == nil {
@@ -98,6 +117,11 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			// Retry with new proxy
 			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
+		} else {
+			database.ReturnAccount(trainer.Account)
+			log.Println("No proxies available")
+			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			return
 		}
 	}
 	// Account problems
@@ -123,8 +147,9 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	writeApiResponse(w, true, "", mapObjects)
 }
 
-func writeApiResponse(w http.ResponseWriter, ok bool, error string, response []opm.MapObject) {
-	r := opm.ApiResponse{Ok: ok, Error: error, MapObjects: response}
+func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
 		log.Println(err)
@@ -179,6 +204,17 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 		for _, f := range c.Forts {
 			switch f.Type {
 			case protos.FortType_CHECKPOINT:
+				if f.LureInfo != nil {
+					// Lured pokemon found!
+					objects = append(objects, opm.MapObject{
+						Type:      opm.POKEMON,
+						Id:        strconv.FormatUint(f.LureInfo.EncounterId, 36),
+						PokemonId: int(f.LureInfo.ActivePokemonId),
+						Lat:       f.Latitude,
+						Lng:       f.Longitude,
+						Expiry:    f.LureInfo.LureExpiresTimestampMs / 1000,
+					})
+				}
 				objects = append(objects, opm.MapObject{
 					Type:  opm.POKESTOP,
 					Id:    f.Id,
