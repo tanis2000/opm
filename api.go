@@ -23,12 +23,6 @@ func listenAndServe() {
 	log.Fatal(http.ListenAndServe(settings.ListenAddr, nil))
 }
 
-type ApiResponse struct {
-	Ok       bool
-	Error    string
-	Response []opm.MapObject
-}
-
 func cacheHandler(w http.ResponseWriter, r *http.Request) {
 	var objects []opm.MapObject
 	// Check method
@@ -130,7 +124,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, error string, response []opm.MapObject) {
-	r := ApiResponse{Ok: ok, Error: error, Response: response}
+	r := opm.ApiResponse{Ok: ok, Error: error, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
 		log.Println(err)
