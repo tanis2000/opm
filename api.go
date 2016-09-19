@@ -173,6 +173,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 		for _, p := range c.WildPokemons {
 			expiry := time.Now().Add(time.Duration(p.TimeTillHiddenMs) * time.Millisecond).Unix()
 			objects = append(objects, opm.MapObject{
+				Type:      opm.POKEMON,
 				Id:        strconv.FormatUint(p.EncounterId, 36),
 				PokemonId: int(p.PokemonData.PokemonId),
 				Lat:       p.Latitude,
