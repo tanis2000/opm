@@ -1,5 +1,5 @@
 {
-  "accounts": 100,
+  "accounts": 5,
   "listenAddr": ":8000",
   "scanDelay": 25,
   "apiCallRate": 100,
