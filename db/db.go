@@ -112,7 +112,7 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 }
 
 // GetMapObjects returns all objects within a radius (in meters) of the given lat/lng
-func (db *OpenMapDb) GetMapObjects(lat, lng float64, radius int) ([]opm.MapObject, error) {
+func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([]opm.MapObject, error) {
 	// Build query
 	q := bson.M{
 		"loc": bson.M{
@@ -127,6 +127,7 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, radius int) ([]opm.MapObjec
 			{"expiry": bson.M{"$gt": time.Now().Unix()}},
 			{"expiry": 0},
 		},
+		"type": bson.M{"$in": types},
 	}
 	var objects []object
 	// Query db
