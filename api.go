@@ -46,8 +46,23 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeApiResponse(w, false, err.Error(), objects)
 	}
+	// Pokemon/Gym/Pokestop filter
+	filter := make([]int, 0)
+	if r.FormValue("p") != "" {
+		filter = append(filter, opm.POKEMON)
+	}
+	if r.FormValue("s") != "" {
+		filter = append(filter, opm.POKESTOP)
+	}
+	if r.FormValue("g") != "" {
+		filter = append(filter, opm.GYM)
+	}
+	// If no filter is set -> show everything
+	if len(filter) == 0 {
+		filter = []int{opm.POKEMON, opm.POKESTOP, opm.GYM}
+	}
 	// Get objects from db
-	objects, err = database.GetMapObjects(lat, lng, settings.CacheRadius)
+	objects, err = database.GetMapObjects(lat, lng, filter, settings.CacheRadius)
 	if err != nil {
 		writeApiResponse(w, false, "Failed to get MapObjects from DB", objects)
 		log.Println(err)
