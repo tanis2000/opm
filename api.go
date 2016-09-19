@@ -109,9 +109,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//Save to db
 	for _, o := range result {
-		if err := settings.Db.AddMapObject(o); err != nil {
-			log.Println(err)
-		}
+		settings.Db.AddMapObject(o)
 	}
 	writeApiResponse(w, true, "", result)
 }
