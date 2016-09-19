@@ -45,9 +45,8 @@ func NewOpenMapDb(dbName, dbHost string) (*OpenMapDb, error) {
 		return db, err
 	}
 	db.mongoSession = s
-	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{
-		Key: []string{"$2dsphere:loc"},
-	})
+	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
+	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
 	return db, err
 }
 
@@ -67,7 +66,7 @@ func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 }
 
 // AddPokestop adds a pokestop to the db
-func (db *OpenMapDb) AddPokestop(ps opm.Pokestop) error {
+func (db *OpenMapDb) AddPokestop(ps opm.Pokestop) {
 	o := object{
 		Type:  opm.POKESTOP,
 		Id:    ps.Id,
@@ -77,11 +76,11 @@ func (db *OpenMapDb) AddPokestop(ps opm.Pokestop) error {
 			Coordinates: []float64{ps.Lng, ps.Lat},
 		},
 	}
-	return db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
+	db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
 }
 
 // AddGym adds a gym to the db
-func (db *OpenMapDb) AddGym(g opm.Gym) error {
+func (db *OpenMapDb) AddGym(g opm.Gym) {
 	o := object{
 		Type: opm.GYM,
 		Id:   g.Id,
@@ -91,11 +90,11 @@ func (db *OpenMapDb) AddGym(g opm.Gym) error {
 			Coordinates: []float64{g.Lng, g.Lat},
 		},
 	}
-	return db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
+	db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
 }
 
 // AddMapObject adds a opm.MapObject to the db
-func (db *OpenMapDb) AddMapObject(m opm.MapObject) error {
+func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 	o := object{
 		Type:      m.Type,
 		PokemonId: m.PokemonId,
@@ -108,7 +107,7 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) error {
 		Lured:  m.Lured,
 		Team:   m.Team,
 	}
-	return db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
+	db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
 }
 
 // GetMapObjects returns all objects within a radius (in meters) of the given lat/lng
