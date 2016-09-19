@@ -1,6 +1,9 @@
 package util
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type TrainerQueue struct {
 	in     chan *TrainerSession
@@ -42,13 +45,18 @@ func (t *TrainerQueue) queue() {
 
 // Get requests a *TrainerSession from the queue
 // This will block until a *TrainerSession is available
-func (t *TrainerQueue) Get() *TrainerSession {
-	return <-t.out
+func (t *TrainerQueue) Get(timeout time.Duration) (*TrainerSession, error) {
+	select {
+	case trainer := <-t.out:
+		return trainer, nil
+	case <-time.After(timeout):
+		return &TrainerSession{}, errors.New("Timeout")
+	}
 }
 
 // Queue returns a *TrainerSession to the queue. Also adds new *TrainerSessions.
 func (t *TrainerQueue) Queue(ts *TrainerSession, delay time.Duration) {
-	if ts.Account.Banned {
+	if ts.Account.Banned || ts.Proxy.Dead {
 		return
 	}
 	go func(x *TrainerSession) {

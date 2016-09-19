@@ -15,7 +15,8 @@ type Account struct {
 }
 
 type Proxy struct {
-	Id string
+	Id   string
+	Dead bool
 }
 
 type ApiResponse struct {

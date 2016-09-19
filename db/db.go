@@ -105,10 +105,13 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 			Coordinates: []float64{m.Lng, m.Lat},
 		},
 		Expiry: m.Expiry,
-		Lured:  m.Lured,
 		Team:   m.Team,
 	}
-	db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
+	if o.Type != opm.POKEMON {
+		db.mongoSession.DB(db.DbName).C("Objects").Upsert(bson.M{"id": o.Id}, o)
+	} else {
+		db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
+	}
 }
 
 // GetMapObjects returns all objects within a radius (in meters) of the given lat/lng
@@ -129,6 +132,7 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 		},
 		"type": bson.M{"$in": types},
 	}
+
 	var objects []object
 	// Query db
 	err := db.mongoSession.DB("OpenPogoMap").C("Objects").Find(q).All(&objects)
@@ -146,7 +150,6 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 			Lat:       o.Loc.Coordinates[1],
 			Lng:       o.Loc.Coordinates[0],
 			Expiry:    o.Expiry,
-			Lured:     o.Lured,
 			Team:      o.Team,
 		}
 	}
@@ -172,7 +175,14 @@ func (db *OpenMapDb) GetAccount() (opm.Account, error) {
 	return a, nil
 }
 
-// GetProxy returns a new Proxy
+// ReturnAccount puts an Account back in the db and marks it as not used
+func (db *OpenMapDb) ReturnAccount(a opm.Account) {
+	db_col := bson.M{"username": a.Username}
+	a.Used = false
+	db.mongoSession.DB(db.DbName).C("Accounts").Update(db_col, a)
+}
+
+// GetProxy gets a new Proxy from the db
 func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	var p proxy
 	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false, "use": false}).Select(bson.M{"use": false}).One(&p)
@@ -185,4 +195,12 @@ func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
 	// Return proxy
 	return opm.Proxy{Id: strconv.Itoa(p.Id)}, nil
+}
+
+// ReturnProxy returns a Proxy back to the db and marks it as not used
+func (db *OpenMapDb) ReturnProxy(p opm.Proxy) {
+	db_col := bson.M{"id": p.Id}
+	id, _ := strconv.Atoi(p.Id)
+	change := proxy{Id: id, Dead: false, Use: false}
+	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
 }
