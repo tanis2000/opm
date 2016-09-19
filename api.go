@@ -20,7 +20,7 @@ func listenAndServe() {
 	http.HandleFunc("/q", requestHandler)
 	http.HandleFunc("/c", cacheHandler)
 	// Start listening
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(settings.ListenAddr, nil))
 }
 
 type ApiResponse struct {
@@ -47,9 +47,9 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 		writeApiResponse(w, false, err.Error(), objects)
 	}
 	// Get objects from db
-	objects, err = settings.Db.GetMapObjects(lat, lng, 400)
+	objects, err = database.GetMapObjects(lat, lng, settings.CacheRadius)
 	if err != nil {
-		writeApiResponse(w, false, "Query failed", objects)
+		writeApiResponse(w, false, "Failed to get MapObjects from DB", objects)
 		log.Println(err)
 		return
 	}
@@ -75,19 +75,19 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Get trainer from queue
 	trainer := trainerQueue.Get()
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
-	log.Printf("Using %s for request (%f,%f)", trainer.Account.Username, lat, lng)
+	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
 	// Perform scan
-	result, err := getMapResult(trainer, lat, lng)
+	mapObjects, err := getMapResult(trainer, lat, lng)
 	// Error handling
 	retrySuccess := false
 	// Handle proxy death
 	if err != nil && err.Error() == api.ErrProxyDead.Error() {
 		var p opm.Proxy
-		p, err = settings.Db.GetProxy()
+		p, err = database.GetProxy()
 		if err == nil {
 			trainer.SetProxy(p)
 			// Retry with new proxy
-			result, err = getMapResult(trainer, lat, lng)
+			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
 		}
 	}
@@ -100,7 +100,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Just retry when this error comes
 	if err == api.ErrInvalidPlatformRequest {
-		result, err = getMapResult(trainer, lat, lng)
+		mapObjects, err = getMapResult(trainer, lat, lng)
 	}
 	// Final error check
 	if err != nil && !retrySuccess {
@@ -108,10 +108,10 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//Save to db
-	for _, o := range result {
-		settings.Db.AddMapObject(o)
+	for _, o := range mapObjects {
+		database.AddMapObject(o)
 	}
-	writeApiResponse(w, true, "", result)
+	writeApiResponse(w, true, "", mapObjects)
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, error string, response []opm.MapObject) {
@@ -124,8 +124,7 @@ func writeApiResponse(w http.ResponseWriter, ok bool, error string, response []o
 
 func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm.MapObject, error) {
 	// Set location
-	location := &api.Location{Lat: lat, Lon: lng}
-	trainer.MoveTo(location)
+	trainer.MoveTo(&api.Location{Lat: lat, Lon: lng})
 	// Login trainer
 	err := trainer.Login()
 	if err == api.ErrInvalidAuthToken {
@@ -157,14 +156,13 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 	for _, c := range r.MapCells {
 		// Pokemon
 		for _, p := range c.WildPokemons {
-			tth := p.TimeTillHiddenMs
-			bestBefore := time.Now().Add(time.Duration(tth) * time.Millisecond).Unix()
+			expiry := time.Now().Add(time.Duration(p.TimeTillHiddenMs) * time.Millisecond).Unix()
 			objects = append(objects, opm.MapObject{
 				Id:        strconv.FormatUint(p.EncounterId, 36),
 				PokemonId: int(p.PokemonData.PokemonId),
 				Lat:       p.Latitude,
 				Lng:       p.Longitude,
-				Expiry:    bestBefore,
+				Expiry:    expiry,
 			})
 		}
 		// Forts

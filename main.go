@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
+	"github.com/femot/openmap-tools/db"
 	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
@@ -15,6 +16,7 @@ var ticks chan bool
 var feed api.Feed
 var crypto api.Crypto
 var trainerQueue *util.TrainerQueue
+var database *db.OpenMapDb
 
 func main() {
 	log.SetFlags(log.Lmicroseconds)
@@ -27,27 +29,35 @@ func main() {
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
+	// Init db
+	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Load trainers
 	trainers := make([]*util.TrainerSession, settings.Accounts)
 	for i := range trainers {
-		a, err := settings.Db.GetAccount()
+		// Get opm.Account from db
+		a, err := database.GetAccount()
 		if err != nil {
 			log.Fatal("Not enough accounts")
 		}
+		// Initialize *util.TrainerSession
 		trainers[i] = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
-		if p, err := settings.Db.GetProxy(); err == nil {
+		// Assign a proxy
+		if p, err := database.GetProxy(); err == nil {
 			trainers[i].SetProxy(p)
 		} else {
+			// Trainer will try to get new proxy, when a request is sent to him
 			log.Println("No proxy available. Assigning Id 0")
 			trainers[i].SetProxy(opm.Proxy{Id: "0"})
 		}
 
 	}
+	// Init trainerQueue
 	trainerQueue = util.NewTrainerQueue(trainers)
-
-	// Create channels
-	ticks = make(chan bool)
 	// Start ticker
+	ticks = make(chan bool)
 	go func(d time.Duration) {
 		for {
 			ticks <- true
