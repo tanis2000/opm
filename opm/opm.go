@@ -18,6 +18,12 @@ type Proxy struct {
 	Id string
 }
 
+type ApiResponse struct {
+	Ok         bool
+	Error      string
+	MapObjects []MapObject
+}
+
 type MapObject struct {
 	Type      int
 	PokemonId int
