@@ -39,20 +39,21 @@ type object struct {
 }
 
 // NewOpenMapDb creates a new connection to
-func NewOpenMapDb(dbName, dbHost string) (*OpenMapDb, error) {
+func NewOpenMapDb(dbName, dbHost, user, password string) (*OpenMapDb, error) {
 	db := &OpenMapDb{DbName: dbName, DbHost: dbHost}
 	s, err := mgo.Dial(db.DbHost)
 	if err != nil {
 		return db, err
 	}
 	db.mongoSession = s
+	db.mongoSession.DB(db.DbName).Login(user, password)
 	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
 	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
 	return db, err
 }
 
 func (db *OpenMapDb) Login(user, password string) error {
-	return db.mongoSession.DB("admin").Login(user, password)
+	return db.mongoSession.DB(db.DbName).Login(user, password)
 }
 
 // AddPokemon adds a pokemon to the db
