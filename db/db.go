@@ -52,7 +52,7 @@ func NewOpenMapDb(dbName, dbHost string) (*OpenMapDb, error) {
 }
 
 func (db *OpenMapDb) Login(user, password string) error {
-	return db.mongoSession.DB(db.DbName).Login(user, password)
+	return db.mongoSession.DB("admin").Login(user, password)
 }
 
 // AddPokemon adds a pokemon to the db
