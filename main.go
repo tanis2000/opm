@@ -69,7 +69,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// Login DB
-	err = MongoSess.DB("admin").Login(settings.DbUser, settings.DbPassword)
+	err = MongoSess.DB("OpenPogoMap").Login(settings.DbUser, settings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	var newClient = NewClient(conn, exitHub)
-	log.Info("New client " + string(newClient.ID))
+	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
 	bsonMap := ProxyDB{Use: false, Dead: false, Id: newClient.ID}
