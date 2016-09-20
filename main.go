@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"io/ioutil"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"gopkg.in/mgo.v2"
@@ -29,10 +31,15 @@ type Request struct {
 	Data string `json:"data"`
 }
 
-type ProxyDB struct{
-    Id int
-    Use bool
-    Dead bool
+type ProxyDB struct {
+	Id   int
+	Use  bool
+	Dead bool
+}
+
+type Settings struct {
+	DbUser     string
+	DbPassword string
 }
 
 var upgrader = websocket.Upgrader{
@@ -46,6 +53,23 @@ var upgrader = websocket.Upgrader{
 func main() {
 	if err != nil {
 		log.Fatal("Error connecting with mongo!")
+	}
+
+	// Read from file
+	b, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Unmarshal json
+	var settings Settings
+	err = json.Unmarshal(b, &settings)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Login DB
+	err = MongoSess.DB("OpenPogoMap").Login(settings.DbUser, settings.DbPassword)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	log.Info("Started the hub")
@@ -83,8 +107,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	dataFinal := base64.StdEncoding.EncodeToString(data.Bytes())
 	req := Request{r.Method, finalHost, r.Header.Get("Content-Type"), r.Header.Get("User-Agent"), dataFinal}
 
-	json, _ := json.Marshal(req)
-	proxy.Send(json)
+	j, _ := json.Marshal(req)
+	proxy.Send(j)
 
 	resp := <-proxy.Response
 	w.Write(resp.Data)
@@ -102,7 +126,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
-    bsonMap := ProxyDB{Use : false, Dead : false, Id : newClient.ID}
-    MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
+	bsonMap := ProxyDB{Use: false, Dead: false, Id: newClient.ID}
+	MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
 	newClient.Listen()
 }

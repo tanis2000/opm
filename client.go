@@ -12,10 +12,10 @@ var maxID int
 
 const (
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 30 * time.Second
+	pongWait = 15 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
+	pingPeriod = (pongWait * 7) / 10
 )
 
 //A struct to store client data
@@ -35,6 +35,14 @@ type Message struct {
 }
 
 func NewClient(ws *websocket.Conn, h *Hub) *Client {
+	if maxID == 0 {
+		var proxy ProxyDB
+		err := MongoSess.DB("OpenPogoMap").C("Proxy").Find(nil).Select(bson.M{"$max": "id"}).One(&proxy)
+
+		if err == nil {
+			log.Info(proxy.Id)
+		}
+	}
 	maxID++
 	return &Client{maxID, ws, make(chan *Message), make(chan []byte), h}
 }
