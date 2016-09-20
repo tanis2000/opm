@@ -33,6 +33,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = database.Login(settings.DbUser, settings.DbPassword)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Load trainers
 	trainers := make([]*util.TrainerSession, 0)
 	for {
