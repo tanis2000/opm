@@ -51,6 +51,10 @@ func NewOpenMapDb(dbName, dbHost string) (*OpenMapDb, error) {
 	return db, err
 }
 
+func (db *OpenMapDb) Login(user, password string) error {
+	return db.mongoSession.DB(db.DbName).Login(user, password)
+}
+
 // AddPokemon adds a pokemon to the db
 func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 	o := object{
@@ -154,6 +158,13 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 		}
 	}
 	return mapObjects, nil
+}
+
+// GetBannedAccounts returns all accounts that are flagged as banned from the db
+func (db *OpenMapDb) GetBannedAccounts() ([]opm.Account, error) {
+	var accounts []opm.Account
+	err := db.mongoSession.DB(db.DbName).C("Accounts").Find(bson.M{"banned": true}).One(&accounts)
+	return accounts, err
 }
 
 // GetAccount tries to get an account from the db that is neither in use, nor banned
