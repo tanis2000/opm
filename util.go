@@ -17,6 +17,8 @@ type Settings struct {
 	ApiCallRate int    // Time between API calls in milliseconds
 	DbName      string // Name of the db
 	DbHost      string // Host of the db
+	DbUser      string
+	DbPassword  string
 }
 
 func loadSettings() (Settings, error) {
