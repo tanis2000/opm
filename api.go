@@ -127,7 +127,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Account problems
 	if err != nil {
 		errString := err.Error()
-		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned || err.Error() == "Empty Response" || strings.Contains(errString, "not yet active") {
+		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned || err.Error() == "Empty response" || strings.Contains(errString, "not yet active") {
 			log.Printf("Account %s banned", trainer.Account.Username)
 			trainer.Account.Banned = true
 		}
@@ -149,7 +149,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
-	w.Header().Add("Access-Control-Allow-Origin", "*")
+	// w.Header().Add("Access-Control-Allow-Origin", "*")
 	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
