@@ -60,7 +60,7 @@ func main() {
 	// Read from file
 	b, err := ioutil.ReadFile("config.json")
 	if err != nil {
-		return Settings{}, err
+		log.Fatal(err)
 	}
 	// Unmarshal json
 	var settings Settings
