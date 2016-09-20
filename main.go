@@ -67,10 +67,6 @@ func main() {
 		log.Fatal(err)
 	}
 	// Login DB
-	err = MongoSess.DB("OpenPogoMap").Login(settings.DbUser, settings.DbPassword)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	log.Info("Started the hub")
 
