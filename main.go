@@ -29,11 +29,7 @@ func main() {
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
 	// Init db
-	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = database.Login(settings.DbUser, settings.DbPassword)
+	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
