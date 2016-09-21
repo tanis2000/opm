@@ -17,7 +17,7 @@ import (
 	"github.com/pogodevorg/POGOProtos-go"
 )
 
-var ErrBusy = errors.New("All our minions are busy. Try again later.")
+var ErrBusy = errors.New("All our minions are busy")
 
 func listenAndServe() {
 	// Setup routes
@@ -158,6 +158,11 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	w.Header().Add("Access-Control-Allow-Origin", settings.AllowOrigin)
 	w.Header().Add("Content-Type", "application/json")
+
+	if e != ErrBusy.Error() {
+		e = "Scan failed"
+	}
+
 	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
