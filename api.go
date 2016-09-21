@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
@@ -19,6 +21,7 @@ var ErrBusy = errors.New("All our minions are busy. Try again later.")
 
 func listenAndServe() {
 	// Setup routes
+	http.HandleFunc("/s", statusHandler)
 	http.HandleFunc("/q", requestHandler)
 	http.HandleFunc("/c", cacheHandler)
 	// Start listening
@@ -100,6 +103,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 		trainer.SetProxy(p)
+		status[trainer.Account.Username] = StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
 	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
@@ -114,10 +118,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		p, err = database.GetProxy()
 		if err == nil {
 			trainer.SetProxy(p)
+			status[trainer.Account.Username] = StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 			// Retry with new proxy
 			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
 		} else {
+			delete(status, trainer.Account.Username)
 			database.ReturnAccount(trainer.Account)
 			log.Println("No proxies available")
 			writeApiResponse(w, false, ErrBusy.Error(), nil)
@@ -130,6 +136,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned || err.Error() == "Empty response" || strings.Contains(errString, "not yet active") {
 			log.Printf("Account %s banned", trainer.Account.Username)
 			trainer.Account.Banned = true
+			delete(status, trainer.Account.Username)
 		}
 	}
 	// Just retry when this error comes
@@ -149,7 +156,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
-	// w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Origin", settings.AllowOrigin)
+	w.Header().Add("Content-Type", "application/json")
 	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
@@ -235,4 +243,20 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 		}
 	}
 	return objects
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("secret") != settings.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprint(w, "nope")
+		return
+	}
+
+	list := make([]StatusEntry, 0)
+	for _, v := range status {
+		list = append(list, v)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
 }

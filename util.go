@@ -19,6 +19,15 @@ type Settings struct {
 	DbHost      string // Host of the db
 	DbUser      string
 	DbPassword  string
+	Secret      string
+	AllowOrigin string
+}
+
+type Status map[string]StatusEntry
+
+type StatusEntry struct {
+	AccountName string
+	ProxyId     string
 }
 
 func loadSettings() (Settings, error) {

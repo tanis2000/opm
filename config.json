@@ -1,12 +1,14 @@
 {
-  "accounts": 200,
+  "accounts": 10,
   "listenAddr": ":8000",
   "scanDelay": 25,
   "apiCallRate": 200,
   "cacheRadius": 400,
   "dbName": "OpenPogoMap",
   "dbHost": "localhost",
-  "dbUser": "gertraud",
-  "dbPassword": "geheim",
-  "proxyHost": "http://localhost:8080"
+  "dbUser": "",
+  "dbPassword": "",
+  "proxyHost": "http://localhost:8080",
+  "secret": "meow",
+  "allowOrigin": "*"
 }

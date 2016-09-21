@@ -16,6 +16,7 @@ var feed api.Feed
 var crypto api.Crypto
 var trainerQueue *util.TrainerQueue
 var database *db.OpenMapDb
+var status Status
 
 func main() {
 	log.SetFlags(log.Lmicroseconds)
@@ -25,6 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	status = make(Status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
@@ -42,6 +44,7 @@ func main() {
 			break
 		}
 		trainers = append(trainers, t)
+		status[t.Account.Username] = StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.Id}
 		if len(trainers) >= settings.Accounts {
 			break
 		}
