@@ -86,6 +86,7 @@ func main() {
 	}
 	// Add pokemon
 	if *addPokemon {
+		rand.Seed(time.Now().UnixNano())
 		letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 		b := make([]rune, 16)
 		for i := range b {
