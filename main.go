@@ -9,7 +9,12 @@ import (
 	"encoding/json"
 	"log"
 
+	"math/rand"
+
+	"time"
+
 	"github.com/femot/openmap-tools/db"
+	"github.com/femot/openmap-tools/opm"
 )
 
 func main() {
@@ -27,6 +32,10 @@ func main() {
 	ufs := flag.Bool("ufs", false, "Update database from status")
 	statusPage := flag.String("statuspage", "", "Status page to use with -ufs flag")
 	removeDeadProxies := flag.Bool("removedeadproxies", false, "Remove all dead proxies from the database")
+	addPokemon := flag.Bool("addpokemon", false, "Adds a pokemon to the database. Use with -id, -lat and -lng")
+	pokeId := flag.Int("id", 151, "Pokemon Id to add to the database (-addpokemon)")
+	lat := flag.Float64("lat", 34.008096, "Latitude for pokemon (-addpokemon)")
+	lng := flag.Float64("lng", -118.497933, "Latitude for pokemon (-addpokemon)")
 	// Parse flags
 	flag.Parse()
 	// Do something
@@ -75,6 +84,26 @@ func main() {
 			fmt.Printf("Removed %d proxies\n", count)
 		}
 	}
+	// Add pokemon
+	if *addPokemon {
+		letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+		b := make([]rune, 16)
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		randId := string(b)
+
+		obj := opm.MapObject{
+			Type:      opm.POKEMON,
+			Lat:       *lat,
+			Lng:       *lng,
+			Id:        randId,
+			PokemonId: *pokeId,
+			Expiry:    time.Now().Add(15 * time.Minute).Unix(),
+		}
+		database.AddMapObject(obj)
+	}
+
 	// UFS
 	if *ufs {
 		req, _ := http.NewRequest("GET", *statusPage, nil)
