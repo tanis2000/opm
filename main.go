@@ -72,7 +72,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Printf("Removed %d proxies", count)
+			fmt.Printf("Removed %d proxies\n", count)
 		}
 	}
 	// UFS
