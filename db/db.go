@@ -46,10 +46,22 @@ func NewOpenMapDb(dbName, dbHost, user, password string) (*OpenMapDb, error) {
 		return db, err
 	}
 	db.mongoSession = s
-	db.mongoSession.DB(db.DbName).Login(user, password)
-	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
-	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
+	if user != "" && password != "" {
+		err = db.mongoSession.DB(db.DbName).Login(user, password)
+		if err != nil {
+			return db, err
+		}
+	}
+	err = db.ensureIndex()
 	return db, err
+}
+
+func (db *OpenMapDb) ensureIndex() error {
+	err := db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
+	if err != nil {
+		return err
+	}
+	return db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
 }
 
 func (db *OpenMapDb) Login(user, password string) error {
@@ -137,9 +149,8 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 		},
 		"type": bson.M{"$in": types},
 	}
-
-	var objects []object
 	// Query db
+	var objects []object
 	err := db.mongoSession.DB("OpenPogoMap").C("Objects").Find(q).All(&objects)
 	if err != nil {
 		return nil, err
@@ -159,6 +170,31 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 		}
 	}
 	return mapObjects, nil
+}
+
+// RemoveOldPokemon removes all Pokemon that expire before the given unix timestamp.
+// It will return the count of removed Pokemon and an error, if removal was not successful.
+func (db *OpenMapDb) RemoveOldPokemon(threshold int64) (int, error) {
+	filter := bson.M{
+		"expiry": bson.M{
+			"$lt": threshold,
+		},
+		"type": opm.POKEMON,
+	}
+	change, err := db.mongoSession.DB(db.DbName).C("Objects").RemoveAll(filter)
+	if err != nil {
+		return 0, err
+	}
+	return change.Removed, nil
+}
+
+// MarkAccountsAsUnused sets the used flag for all accounts in the database to false
+func (db *OpenMapDb) MarkAccountsAsUnused() (int, error) {
+	change, err := db.mongoSession.DB(db.DbName).C("Accounts").UpdateAll(bson.M{"used": true}, bson.M{"$set": bson.M{"used": false}})
+	if err != nil {
+		return -1, err
+	}
+	return change.Updated, nil
 }
 
 // GetBannedAccounts returns all accounts that are flagged as banned from the db
@@ -192,6 +228,20 @@ func (db *OpenMapDb) ReturnAccount(a opm.Account) {
 	db_col := bson.M{"username": a.Username}
 	a.Used = false
 	db.mongoSession.DB(db.DbName).C("Accounts").Update(db_col, a)
+}
+
+// MarkProxiesAsUnused sets the used flag for all accounts in the database to false
+func (db *OpenMapDb) MarkProxiesAsUnused() (int, error) {
+	change, err := db.mongoSession.DB(db.DbName).C("Proxy").UpdateAll(bson.M{"use": true}, bson.M{"$set": bson.M{"use": false}})
+	if err != nil {
+		return -1, err
+	}
+	return change.Updated, nil
+}
+
+// DropProxies deletes ALL proxies from the database
+func (db *OpenMapDb) DropProxies() error {
+	return db.mongoSession.DB(db.DbName).C("Proxy").DropCollection()
 }
 
 // GetProxy gets a new Proxy from the db
