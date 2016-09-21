@@ -68,6 +68,82 @@ func (db *OpenMapDb) Login(user, password string) error {
 	return db.mongoSession.DB(db.DbName).Login(user, password)
 }
 
+// Cleanup updates the use status of all proxies/accounts based on the input list
+// Format of the input list is:
+// 	[][]string{{"username", "proxyid"}, {"username2", "proxyid2"}, ...}
+func (db *OpenMapDb) Cleanup(list [][]string) (int, error) {
+	// Get usernames and proxy ids
+	usernames := make([]string, len(list))
+	proxies := make([]int, len(list))
+	for i, v := range list {
+		usernames[i] = v[0]
+		id, _ := strconv.Atoi(v[1])
+		proxies[i] = id
+	}
+	// Update accounts
+	inAcc := bson.M{
+		"username": bson.M{
+			"$in": usernames,
+		},
+	}
+	ninAcc := bson.M{
+		"username": bson.M{
+			"$nin": usernames,
+		},
+	}
+	total := 0
+	change, err := db.mongoSession.DB(db.DbName).C("Accounts").UpdateAll(inAcc, bson.M{
+		"$set": bson.M{
+			"used": true,
+		},
+	})
+	if err != nil {
+		return total, err
+	}
+	total += change.Updated
+	change, err = db.mongoSession.DB(db.DbName).C("Accounts").UpdateAll(ninAcc, bson.M{
+		"$set": bson.M{
+			"used": false,
+		},
+	})
+	if err != nil {
+		return total, err
+	}
+	total += change.Updated
+	// Update proxies
+	inProxies := bson.M{
+		"id": bson.M{
+			"$in": proxies,
+		},
+	}
+	ninProxies := bson.M{
+		"id": bson.M{
+			"$nin": proxies,
+		},
+	}
+	change, err = db.mongoSession.DB(db.DbName).C("Proxy").UpdateAll(inProxies, bson.M{
+		"$set": bson.M{
+			"use": true,
+		},
+	})
+	if err != nil {
+		return total, err
+	}
+	total += change.Updated
+	change, err = db.mongoSession.DB(db.DbName).C("Proxy").UpdateAll(ninProxies, bson.M{
+		"$set": bson.M{
+			"use": false,
+		},
+	})
+	if err != nil {
+		return total, err
+	}
+	total += change.Updated
+
+	return total, nil
+
+}
+
 // AddPokemon adds a pokemon to the db
 func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 	o := object{
@@ -239,9 +315,18 @@ func (db *OpenMapDb) MarkProxiesAsUnused() (int, error) {
 	return change.Updated, nil
 }
 
-// DropProxies deletes ALL proxies from the database
+// DropProxies removes ALL proxies from the database
 func (db *OpenMapDb) DropProxies() error {
 	return db.mongoSession.DB(db.DbName).C("Proxy").DropCollection()
+}
+
+// RemoveDeadProxies removes dead proxies from the database
+func (db *OpenMapDb) RemoveDeadProxies() (int, error) {
+	change, err := db.mongoSession.DB(db.DbName).C("Proxy").RemoveAll(bson.M{"dead": true})
+	if err != nil {
+		return -1, err
+	}
+	return change.Removed, nil
 }
 
 // GetProxy gets a new Proxy from the db

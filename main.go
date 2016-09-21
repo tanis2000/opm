@@ -4,6 +4,11 @@ import (
 	"flag"
 	"fmt"
 
+	"net/http"
+
+	"encoding/json"
+	"log"
+
 	"github.com/femot/openmap-tools/db"
 )
 
@@ -19,6 +24,9 @@ func main() {
 	dropProxies := flag.Bool("dropproxies", false, "Delete all proxies from the database")
 	cleanProxies := flag.Bool("cleanproxies", false, "Marks all proxies as unused")
 	cleanAccounts := flag.Bool("cleanaccounts", false, "Marks all accounts as unused")
+	ufs := flag.Bool("ufs", false, "Update database from status")
+	statusPage := flag.String("statuspage", "", "Status page to use with -ufs flag")
+	removeDeadProxies := flag.Bool("removedeadproxies", false, "Remove all dead proxies from the database")
 	// Parse flags
 	flag.Parse()
 	// Do something
@@ -58,4 +66,39 @@ func main() {
 		}
 		fmt.Printf("Updated %d proxies\n", count)
 	}
+	// Remove dead proxies
+	if *removeDeadProxies {
+		count, err := database.RemoveDeadProxies()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("Removed %d proxies", count)
+		}
+	}
+	// UFS
+	if *ufs {
+		req, _ := http.NewRequest("GET", *statusPage, nil)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		var status []map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&status)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		list := make([][]string, len(status))
+		for i, v := range status {
+			list[i] = []string{v["AccountName"], v["ProxyId"]}
+		}
+		count, err := database.Cleanup(list)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("Updated %d database entries\n", count)
+	}
+
 }
