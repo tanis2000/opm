@@ -160,7 +160,7 @@ func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.M
 	w.Header().Add("Access-Control-Allow-Origin", settings.AllowOrigin)
 	w.Header().Add("Content-Type", "application/json")
 
-	if e != ErrBusy.Error() {
+	if e != "" && e != ErrBusy.Error() {
 		e = "Scan failed"
 	}
 
