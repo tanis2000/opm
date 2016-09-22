@@ -118,8 +118,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Failed to upgrade:", err)
+		return
 	}
-
 	defer conn.Close()
 
 	var newClient = NewClient(conn, exitHub)
