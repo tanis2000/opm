@@ -329,6 +329,11 @@ func (db *OpenMapDb) ReturnAccount(a opm.Account) {
 	db.mongoSession.DB(db.DbName).C("Accounts").Update(db_col, a)
 }
 
+// AddAccount adds an Account to the database
+func (db *OpenMapDb) AddAccount(a opm.Account) {
+	db.mongoSession.DB("OpenPogoMap").C("Accounts").Insert(a)
+}
+
 // UpdateAccount updates the account information in the database
 func (db *OpenMapDb) UpdateAccount(a opm.Account) {
 	db.mongoSession.DB(db.DbName).C("Accounts").Update(bson.M{"username": a.Username}, a)

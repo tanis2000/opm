@@ -1,16 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-
-	"net/http"
-
-	"encoding/json"
+	"io/ioutil"
 	"log"
-
 	"math/rand"
-
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/femot/openmap-tools/db"
@@ -27,6 +25,8 @@ func main() {
 	// Commands
 	removePokemon := flag.Int64("removepokemon", -1, "Delete Pokemon which expire before the provided unix timestamp")
 	dropProxies := flag.Bool("dropproxies", false, "Delete all proxies from the database")
+	addAccounts := flag.Bool("addaccounts", false, "Add accounts to the db")
+	accountsFile := flag.String("accountsfile", "accounts.txt", "Add accounts from provided file to database")
 	cleanProxies := flag.Bool("cleanproxies", false, "Marks all proxies as unused")
 	cleanAccounts := flag.Bool("cleanaccounts", false, "Marks all accounts as unused")
 	ufs := flag.Bool("ufs", false, "Update database from status")
@@ -90,6 +90,25 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+	// Add accounts
+	if *addAccounts {
+		// Read file
+		bytes, err := ioutil.ReadFile(*accountsFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		lines := strings.Split(string(bytes), "\r\n")
+		// Get accounts from file
+		accounts := make([]opm.Account, 0)
+		for _, l := range lines {
+			split := strings.Split(l, ":")
+			if len(split) == 2 && split[0] != "false" {
+				accounts = append(accounts, opm.Account{Username: split[0], Password: split[1], Provider: "ptc", Used: false, Banned: false})
+				database.AddAccount(opm.Account{Username: split[0], Password: split[1], Provider: "ptc"})
+			}
+		}
+		fmt.Printf("Added %d accounts\n", len(accounts))
 	}
 	// Mark accounts as unused
 	if *cleanAccounts {
