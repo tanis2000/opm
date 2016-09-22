@@ -136,6 +136,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(errString, "Your username or password is incorrect") || err == api.ErrAccountBanned || err.Error() == "Empty response" || strings.Contains(errString, "not yet active") {
 			log.Printf("Account %s banned", trainer.Account.Username)
 			trainer.Account.Banned = true
+			database.UpdateAccount(trainer.Account)
 			delete(status, trainer.Account.Username)
 		}
 	}
