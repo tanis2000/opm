@@ -277,6 +277,21 @@ func (db *OpenMapDb) MarkAccountsAsUnused() (int, error) {
 	return change.Updated, nil
 }
 
+// AccountStats returns total, used and banned number of accounts (in that order)
+func (db *OpenMapDb) AccountStats() (int, int, int, error) {
+	c := db.mongoSession.DB(db.DbName).C("Accounts")
+	total, err := c.Count()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	used, err := c.Find(bson.M{"used": true, "banned": false}).Count()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	banned, err := c.Find(bson.M{"banned": true}).Count()
+	return total, used, banned, err
+}
+
 // GetBannedAccounts returns all accounts that are flagged as banned from the db
 func (db *OpenMapDb) GetBannedAccounts() ([]opm.Account, error) {
 	var accounts []opm.Account
@@ -310,6 +325,11 @@ func (db *OpenMapDb) ReturnAccount(a opm.Account) {
 	db.mongoSession.DB(db.DbName).C("Accounts").Update(db_col, a)
 }
 
+// UpdateAccount updates the account information in the database
+func (db *OpenMapDb) UpdateAccount(a opm.Account) {
+	db.mongoSession.DB(db.DbName).C("Accounts").Update(bson.M{"username": a.Username}, a)
+}
+
 // MarkProxiesAsUnused sets the used flag for all accounts in the database to false
 func (db *OpenMapDb) MarkProxiesAsUnused() (int, error) {
 	change, err := db.mongoSession.DB(db.DbName).C("Proxy").UpdateAll(bson.M{"use": true}, bson.M{"$set": bson.M{"use": false}})
@@ -331,6 +351,16 @@ func (db *OpenMapDb) RemoveDeadProxies() (int, error) {
 		return -1, err
 	}
 	return change.Removed, nil
+}
+
+// ProxyStats returns the number of currently alive/used proxies (in that order)
+func (db *OpenMapDb) ProxyStats() (int, int, error) {
+	alive, err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false}).Count()
+	if err != nil {
+		return 0, 0, err
+	}
+	aliveUsed, err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false, "use": true}).Count()
+	return alive, aliveUsed, err
 }
 
 // GetProxy gets a new Proxy from the db

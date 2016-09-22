@@ -30,8 +30,8 @@ func main() {
 	cleanProxies := flag.Bool("cleanproxies", false, "Marks all proxies as unused")
 	cleanAccounts := flag.Bool("cleanaccounts", false, "Marks all accounts as unused")
 	ufs := flag.Bool("ufs", false, "Update database from status")
-	statusPage := flag.String("statuspage", "https://api.openpokemap.pw/s", "Status page to use with -ufs and -status flags")
-	secret := flag.String("secret", "kek", "Secret for the status page")
+	statusPage := flag.String("statuspage", "http://localhost:8000/s", "Status page to use with -ufs and -status flags")
+	secret := flag.String("secret", "meow", "Secret for the status page")
 	status := flag.Bool("status", false, "Show status")
 	removeDeadProxies := flag.Bool("removedeadproxies", false, "Remove all dead proxies from the database")
 	addPokemon := flag.Bool("addpokemon", false, "Adds a pokemon to the database. Use with -id, -lat and -lng")
@@ -40,29 +40,41 @@ func main() {
 	lng := flag.Float64("lng", -118.497933, "Latitude for pokemon (-addpokemon)")
 	// Parse flags
 	flag.Parse()
-	// Status
-	if *status {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?secret=%s", *statusPage, *secret), nil)
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		var s []map[string]string
-		err = json.NewDecoder(resp.Body).Decode(&s)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		fmt.Printf("Scanner currently using %d accounts/proxies\n", len(s))
-	}
-
 	// Do something
 	database, err := db.NewOpenMapDb(*dbName, *dbHost, *dbUser, *dbPass)
 	if err != nil {
 		fmt.Println(err)
 		return
+	}
+	// Status
+	if *status {
+		// Scanner status
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?secret=%s", *statusPage, *secret), nil)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Println(err)
+		}
+		var s []map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&s)
+		if err != nil {
+			log.Println(err)
+		} else {
+			fmt.Printf("Scanner currently using %d accounts/proxies\n", len(s))
+		}
+		// Proxy status
+		pAlive, pUsed, err := database.ProxyStats()
+		if err != nil {
+			log.Println(err)
+		} else {
+			fmt.Printf("Proxies:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n", pAlive, pUsed, float64(pUsed)/float64(pAlive)*100)
+		}
+		// Account status
+		aTotal, aUsed, aBanned, err := database.AccountStats()
+		if err != nil {
+			log.Println(err)
+		} else {
+			fmt.Printf("Accounts:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n\tBanned:\t%d (%.2f%%)\n", aTotal, aUsed, float64(aUsed)/float64(aTotal)*100, aBanned, float64(aBanned)/float64(aTotal)*100)
+		}
 	}
 	// Remove old Pokemon
 	if *removePokemon != -1 {
