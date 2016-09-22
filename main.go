@@ -98,7 +98,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		lines := strings.Split(string(bytes), "\r\n")
+		var lines string
+		if strings.Contains(string(bytes), "\r\n") {
+			lines = strings.Split(string(bytes), "\r\n")
+		} else {
+			lines = strings.Split(string(bytes), "\n")
+		}
 		// Get accounts from file
 		accounts := make([]opm.Account, 0)
 		for _, l := range lines {
