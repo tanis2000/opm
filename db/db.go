@@ -392,14 +392,17 @@ func (db *OpenMapDb) ProxyStats() (int, int, error) {
 // GetProxy gets a new Proxy from the db
 func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	var p proxy
-	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false}).One(&p)
+	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"use": false, "dead": false}).One(&p)
 	if err != nil {
 		return opm.Proxy{}, errors.New("No proxy available.")
 	}
 	// Mark proxy as used
 	db_col := bson.M{"id": p.Id}
-	change := proxy{Id: p.Id, Dead: false, Use: true}
-	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
+	p.Use = true
+	err = db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, p)
+	if err != nil {
+		log.Println(err)
+	}
 	// Return proxy
 	return opm.Proxy{Id: p.Id}, nil
 }
