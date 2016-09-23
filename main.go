@@ -32,12 +32,6 @@ type Request struct {
 	Data string `json:"data"`
 }
 
-type ProxyDB struct {
-	Id   int
-	Use  bool
-	Dead bool
-}
-
 type Settings struct {
 	DbUser     string
 	DbPassword string
@@ -131,7 +125,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
-	p := opm.Proxy{Id: newClient.ID}
+	p := opm.Proxy{Id: newClient.ID, Dead: false, Use: false}
 	database.AddProxy(p)
 	newClient.Listen()
 }
