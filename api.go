@@ -1,15 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"fmt"
 
 	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
@@ -106,6 +106,10 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
+	// Create context
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	trainer.Context = ctx
 	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
 	// Perform scan
 	mapObjects, err := getMapResult(trainer, lat, lng)
