@@ -6,6 +6,7 @@ import (
 
 	"github.com/femot/gophermon/encrypt"
 	"github.com/femot/openmap-tools/db"
+	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
 )
@@ -44,7 +45,7 @@ func main() {
 			break
 		}
 		trainers = append(trainers, t)
-		status[t.Account.Username] = StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.Id}
+		status[t.Account.Username] = opm.StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.Id}
 		if len(trainers) >= settings.Accounts {
 			break
 		}

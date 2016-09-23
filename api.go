@@ -103,7 +103,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 		trainer.SetProxy(p)
-		status[trainer.Account.Username] = StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
+		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
 	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
@@ -118,7 +118,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		p, err = database.GetProxy()
 		if err == nil {
 			trainer.SetProxy(p)
-			status[trainer.Account.Username] = StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
+			status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 			// Retry with new proxy
 			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
@@ -258,7 +258,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list := make([]StatusEntry, 0)
+	list := make([]opm.StatusEntry, 0)
 	for _, v := range status {
 		list = append(list, v)
 	}

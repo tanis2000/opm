@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
 )
@@ -23,12 +24,7 @@ type Settings struct {
 	AllowOrigin string
 }
 
-type Status map[string]StatusEntry
-
-type StatusEntry struct {
-	AccountName string
-	ProxyId     string
-}
+type Status map[string]opm.StatusEntry
 
 func loadSettings() (Settings, error) {
 	// Read from file
