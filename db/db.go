@@ -3,7 +3,6 @@ package db
 import (
 	"errors"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/femot/openmap-tools/opm"
@@ -18,7 +17,7 @@ type OpenMapDb struct {
 }
 
 type proxy struct {
-	Id   int
+	Id   int64
 	Use  bool
 	Dead bool
 }
@@ -76,17 +75,14 @@ func (db *OpenMapDb) Login(user, password string) error {
 	return db.mongoSession.DB(db.DbName).Login(user, password)
 }
 
-// Cleanup updates the use status of all proxies/accounts based on the input list
-// Format of the input list is:
-// 	[][]string{{"username", "proxyid"}, {"username2", "proxyid2"}, ...}
-func (db *OpenMapDb) Cleanup(list [][]string) (int, error) {
+// Cleanup updates the use status of all proxies/accounts based on the input status entries
+func (db *OpenMapDb) Cleanup(list []opm.StatusEntry) (int, error) {
 	// Get usernames and proxy ids
 	usernames := make([]string, len(list))
-	proxies := make([]int, len(list))
+	proxies := make([]int64, len(list))
 	for i, v := range list {
-		usernames[i] = v[0]
-		id, _ := strconv.Atoi(v[1])
-		proxies[i] = id
+		usernames[i] = v.AccountName
+		proxies[i] = v.ProxyId
 	}
 	// Update accounts
 	inAcc := bson.M{
@@ -348,6 +344,27 @@ func (db *OpenMapDb) MarkProxiesAsUnused() (int, error) {
 	return change.Updated, nil
 }
 
+// AddProxy adds a new proxy to the database
+func (db *OpenMapDb) AddProxy(p opm.Proxy) error {
+	return db.mongoSession.DB(db.DbName).C("Proxy").Insert(p)
+}
+
+// UpdateProxy updates a proxy in the database
+func (db *OpenMapDb) UpdateProxy(p opm.Proxy) error {
+	_, err := db.mongoSession.DB(db.DbName).C("Proxy").Upsert(bson.M{"id": p.Id}, p)
+	return err
+}
+
+func (db *OpenMapDb) MaxProxyId() (int64, error) {
+	var proxy opm.Proxy
+	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(nil).Sort("-id").Limit(1).One(&proxy)
+	if err != nil {
+		return 0, err
+	}
+	log.Println(proxy.Id)
+	return proxy.Id, err
+}
+
 // DropProxies removes ALL proxies from the database
 func (db *OpenMapDb) DropProxies() error {
 	return db.mongoSession.DB(db.DbName).C("Proxy").DropCollection()
@@ -375,7 +392,7 @@ func (db *OpenMapDb) ProxyStats() (int, int, error) {
 // GetProxy gets a new Proxy from the db
 func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	var p proxy
-	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false, "use": false}).Select(bson.M{"use": false}).One(&p)
+	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"dead": false}).One(&p)
 	if err != nil {
 		return opm.Proxy{}, errors.New("No proxy available.")
 	}
@@ -384,13 +401,12 @@ func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	change := proxy{Id: p.Id, Dead: false, Use: true}
 	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
 	// Return proxy
-	return opm.Proxy{Id: strconv.Itoa(p.Id)}, nil
+	return opm.Proxy{Id: p.Id}, nil
 }
 
 // ReturnProxy returns a Proxy back to the db and marks it as not used
 func (db *OpenMapDb) ReturnProxy(p opm.Proxy) {
 	db_col := bson.M{"id": p.Id}
-	id, _ := strconv.Atoi(p.Id)
-	change := proxy{Id: id, Dead: false, Use: false}
+	change := proxy{Id: p.Id, Dead: false, Use: false}
 	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
 }

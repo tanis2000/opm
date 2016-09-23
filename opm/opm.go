@@ -15,7 +15,7 @@ type Account struct {
 }
 
 type Proxy struct {
-	Id   string
+	Id   int64
 	Dead bool
 }
 
@@ -56,4 +56,9 @@ type Gym struct {
 	Lat  float64
 	Lng  float64
 	Team int
+}
+
+type StatusEntry struct {
+	AccountName string
+	ProxyId     int64
 }

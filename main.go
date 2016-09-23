@@ -54,7 +54,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
-		var s []map[string]string
+		var s []opm.StatusEntry
 		err = json.NewDecoder(resp.Body).Decode(&s)
 		if err != nil {
 			log.Println(err)
@@ -169,17 +169,14 @@ func main() {
 			log.Println(err)
 			return
 		}
-		var status []map[string]string
+		var status []opm.StatusEntry
 		err = json.NewDecoder(resp.Body).Decode(&status)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		list := make([][]string, len(status))
-		for i, v := range status {
-			list[i] = []string{v["AccountName"], v["ProxyId"]}
-		}
-		count, err := database.Cleanup(list)
+
+		count, err := database.Cleanup(status)
 		if err != nil {
 			fmt.Println(err)
 			return

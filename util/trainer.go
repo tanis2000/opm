@@ -63,7 +63,7 @@ func (t *TrainerSession) Login() error {
 }
 
 func (t *TrainerSession) SetProxy(p opm.Proxy) {
-	log.Printf("Using proxy %s for %s", p.Id, t.Account.Username)
+	log.Printf("Using proxy %d for %s", p.Id, t.Account.Username)
 	t.Proxy = p
 }
 
