@@ -10,8 +10,9 @@ import (
 	"io/ioutil"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/femot/openmap-tools/db"
+	"github.com/femot/openmap-tools/opm"
 	"github.com/gorilla/websocket"
-	"gopkg.in/mgo.v2"
 )
 
 const (
@@ -19,8 +20,8 @@ const (
 )
 
 var (
-	exitHub        *Hub
-	MongoSess, err = mgo.Dial(MongoAddr)
+	exitHub  *Hub
+	database *db.OpenMapDb
 )
 
 type Request struct {
@@ -51,10 +52,6 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	if err != nil {
-		log.Fatal("Error connecting with mongo!")
-	}
-
 	// Read from file
 	b, err := ioutil.ReadFile("config.json")
 	if err != nil {
@@ -67,10 +64,18 @@ func main() {
 		log.Fatal(err)
 	}
 	// Login DB
-	err = MongoSess.DB("OpenPogoMap").Login(settings.DbUser, settings.DbPassword)
+	database, err = db.NewOpenMapDb("OpenPogoMap", MongoAddr, settings.DbUser, settings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Set max id
+	maxID, err = database.MaxProxyId()
+	if err != nil {
+		log.Println(err)
+	}
+	log.Printf("Max id: %d", maxID)
+	// Delete old stuff
+	database.DropProxies()
 
 	log.Info("Started the hub")
 
@@ -88,7 +93,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	proxyID := r.Header.Get("Proxy-Id")
 	finalHost := r.Header.Get("Final-host")
 
-	id, err := strconv.Atoi(proxyID)
+	id, err := strconv.ParseInt(proxyID, 10, 64)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, `Internal error`, http.StatusBadRequest)
@@ -126,7 +131,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
-	bsonMap := ProxyDB{Use: false, Dead: false, Id: newClient.ID}
-	MongoSess.DB("OpenPogoMap").C("Proxy").Insert(bsonMap)
+	p := opm.Proxy{Id: newClient.ID}
+	database.AddProxy(p)
 	newClient.Listen()
 }

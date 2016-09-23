@@ -1,14 +1,15 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/websocket"
-	"gopkg.in/mgo.v2/bson"
-
+	"sync/atomic"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/femot/openmap-tools/opm"
+	"github.com/gorilla/websocket"
 )
 
-var maxID int
+var maxID int64
 
 const (
 	// Time allowed to read the next pong message from the peer.
@@ -20,7 +21,7 @@ const (
 
 //A struct to store client data
 type Client struct {
-	ID       int
+	ID       int64
 	conn     *websocket.Conn
 	Response chan *Message
 	Writer   chan []byte
@@ -35,15 +36,7 @@ type Message struct {
 }
 
 func NewClient(ws *websocket.Conn, h *Hub) *Client {
-	if maxID == 0 {
-		var proxy ProxyDB
-		err := MongoSess.DB("OpenPogoMap").C("Proxy").Find(nil).Select(bson.M{"$max": "id"}).One(&proxy)
-
-		if err == nil {
-			log.Info(proxy.Id)
-		}
-	}
-	maxID++
+	atomic.AddInt64(&maxID, 1)
 	return &Client{maxID, ws, make(chan *Message), make(chan []byte), h}
 }
 
@@ -97,9 +90,7 @@ func (c *Client) handleDisconnect() {
 	c.conn.Close()
 	c.Hub.Remove(c.ID)
 
-	db_col := bson.M{"id": c.ID}
-	change := ProxyDB{Id: c.ID, Dead: true, Use: false}
-	MongoSess.DB("OpenPogoMap").C("Proxy").Update(db_col, change)
+	database.UpdateProxy(opm.Proxy{Id: c.ID, Dead: true})
 
 	c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
 }
