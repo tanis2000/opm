@@ -21,11 +21,18 @@ var ErrBusy = errors.New("All our minions are busy")
 
 func listenAndServe() {
 	// Setup routes
-	http.HandleFunc("/s", statusHandler)
-	http.HandleFunc("/q", requestHandler)
-	http.HandleFunc("/c", cacheHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/s", statusHandler)
+	mux.HandleFunc("/q", requestHandler)
+	mux.HandleFunc("/c", cacheHandler)
 	// Start listening
-	log.Fatal(http.ListenAndServe(settings.ListenAddr, nil))
+	s := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 20 * time.Second,
+		Addr:         settings.ListenAddr,
+		Handler:      mux,
+	}
+	log.Fatal(s.ListenAndServe())
 }
 
 func cacheHandler(w http.ResponseWriter, r *http.Request) {
