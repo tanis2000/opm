@@ -16,6 +16,7 @@ type Account struct {
 
 type Proxy struct {
 	Id   int64
+	Use  bool
 	Dead bool
 }
 

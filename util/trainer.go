@@ -12,7 +12,7 @@ import (
 
 type TrainerSession struct {
 	Account    opm.Account
-	context    context.Context
+	Context    context.Context
 	crypto     api.Crypto
 	failCount  int
 	Feed       api.Feed
@@ -29,7 +29,7 @@ func NewTrainerSession(account opm.Account, location *api.Location, feed api.Fee
 		Location: location,
 		Feed:     feed,
 		session:  &api.Session{},
-		context:  ctx,
+		Context:  ctx,
 		crypto:   crypto,
 	}
 }
@@ -54,7 +54,7 @@ func (t *TrainerSession) Login() error {
 		return err
 	}
 	session := api.NewSession(provider, t.Location, t.Feed, t.crypto, false)
-	err = session.Init(t.context, t.Proxy.Id)
+	err = session.Init(t.Context, t.Proxy.Id)
 	if err != nil {
 		return err
 	}
@@ -73,19 +73,19 @@ func (t *TrainerSession) SetAccount(a opm.Account) {
 
 // Wrap session functions for trainer sessions
 func (t *TrainerSession) Announce() (*protos.GetMapObjectsResponse, error) {
-	return t.session.Announce(t.context, t.Proxy.Id)
+	return t.session.Announce(t.Context, t.Proxy.Id)
 }
 func (t *TrainerSession) Call(requests []*protos.Request) (*protos.ResponseEnvelope, error) {
-	return t.session.Call(t.context, requests, t.Proxy.Id)
+	return t.session.Call(t.Context, requests, t.Proxy.Id)
 }
 func (t *TrainerSession) GetInventory() (*protos.GetInventoryResponse, error) {
-	return t.session.GetInventory(t.context, t.Proxy.Id)
+	return t.session.GetInventory(t.Context, t.Proxy.Id)
 }
 func (t *TrainerSession) GetPlayer() (*protos.GetPlayerResponse, error) {
-	return t.session.GetPlayer(t.context, t.Proxy.Id)
+	return t.session.GetPlayer(t.Context, t.Proxy.Id)
 }
 func (t *TrainerSession) GetPlayerMap() (*protos.GetMapObjectsResponse, error) {
-	return t.session.GetPlayerMap(t.context, t.Proxy.Id)
+	return t.session.GetPlayerMap(t.Context, t.Proxy.Id)
 }
 func (t *TrainerSession) MoveTo(location *api.Location) {
 	t.Location = location
