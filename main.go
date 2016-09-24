@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"io/ioutil"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/femot/openmap-tools/db"
@@ -80,6 +80,23 @@ func main() {
 	http.HandleFunc("/", requestHandler)
 	log.Info("Started the http server")
 	http.ListenAndServe(":8080", nil)
+
+	// proxy client (ws) server
+	wsMux := http.NewServeMux()
+	wsMux.HandleFunc("/websocket", wsHandler)
+	wsServer := http.Server{Addr: ":8080", Handler: wsMux}
+	// proxy request server
+	prMux := http.NewServeMux()
+	prMux.HandleFunc("/", requestHandler)
+	prServer := http.Server{
+		Addr:         ":8081",
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 20 * time.Second,
+		Handler:      prMux,
+	}
+	// start servers
+	go log.Fatal(wsServer.ListenAndServe())
+	log.Fatal(prServer.ListenAndServe())
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
