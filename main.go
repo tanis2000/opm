@@ -76,11 +76,6 @@ func main() {
 	exitHub = NewHub()
 	go exitHub.Listen()
 
-	http.HandleFunc("/websocket", wsHandler)
-	http.HandleFunc("/", requestHandler)
-	log.Info("Started the http server")
-	http.ListenAndServe(":8080", nil)
-
 	// proxy client (ws) server
 	wsMux := http.NewServeMux()
 	wsMux.HandleFunc("/websocket", wsHandler)
@@ -95,8 +90,16 @@ func main() {
 		Handler:      prMux,
 	}
 	// start servers
-	go log.Fatal(wsServer.ListenAndServe())
+	log.Println("Starting WS server")
+	go runServer(wsServer)
+	log.Println("Starting requests server")
 	log.Fatal(prServer.ListenAndServe())
+
+}
+
+func runServer(s http.Server) {
+	err := s.ListenAndServe()
+	log.Fatal(err)
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
