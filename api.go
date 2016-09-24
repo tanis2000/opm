@@ -22,9 +22,9 @@ var ErrBusy = errors.New("All our minions are busy")
 func listenAndServe() {
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/s", statusHandler)
-	mux.HandleFunc("/q", requestHandler)
-	mux.HandleFunc("/c", cacheHandler)
+	mux.HandleFunc("/s", logDecorator(statusHandler))
+	mux.HandleFunc("/q", logDecorator(requestHandler))
+	mux.HandleFunc("/c", logDecorator(cacheHandler))
 	// Start listening
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,
@@ -117,7 +117,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	trainer.Context = ctx
-	log.Printf("Using %s for request\t(%.6f,%.6f)", trainer.Account.Username, lat, lng)
 	// Perform scan
 	mapObjects, err := getMapResult(trainer, lat, lng)
 	// Error handling
@@ -193,7 +192,7 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	}
 	if err != nil {
 		if err != api.ErrProxyDead {
-			log.Printf("Login error (%s):\n\t\t%s\n", trainer.Account.Username, err.Error())
+			log.Printf("Login error (%s): %s\n", trainer.Account.Username, err.Error())
 		}
 		return nil, err
 	}
@@ -202,7 +201,7 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	mapObjects, err := trainer.GetPlayerMap()
 	if err != nil && err != api.ErrNewRPCURL {
 		if err != api.ErrProxyDead {
-			log.Printf("Error getting map objects (%s):\n\t\t%s\n", trainer.Account.Username, err.Error())
+			log.Printf("Error getting map objects (%s): %s\n", trainer.Account.Username, err.Error())
 		}
 		return nil, err
 	}

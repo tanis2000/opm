@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/femot/openmap-tools/opm"
 	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
@@ -54,4 +58,16 @@ func NewTrainerFromDb() (*util.TrainerSession, error) {
 	trainer := util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 	trainer.SetProxy(p)
 	return trainer, nil
+}
+
+func logDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		inner(w, r)
+		if r.Method != "POST" {
+			log.Printf("%-6s %-5s\t%-15s\t%s", r.Method, r.URL.Path, r.RemoteAddr, time.Since(start))
+		} else {
+			log.Printf("%-6s %-5s (%s,%s)\t%-22s\t%s", r.Method, r.URL.Path, r.FormValue("lat"), r.FormValue("lng"), r.RemoteAddr, time.Since(start))
+		}
+	}
 }

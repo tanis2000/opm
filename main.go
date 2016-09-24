@@ -20,7 +20,7 @@ var database *db.OpenMapDb
 var status Status
 
 func main() {
-	log.SetFlags(log.Lmicroseconds)
+	log.SetFlags(log.Lshortfile | log.Ltime)
 	var err error
 	// Load settings
 	settings, err = loadSettings()
