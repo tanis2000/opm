@@ -64,10 +64,16 @@ func logDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Resp
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		inner(w, r)
+
+		remoteAddr := r.RemoteAddr
+		if r.Header.Get("CF-Connecting-IP") != "" {
+			remoteAddr = r.Header.Get("CF-Connecting-IP")
+		}
+
 		if r.Method != "POST" {
-			log.Printf("%-6s %-5s\t%-15s\t%s", r.Method, r.URL.Path, r.RemoteAddr, time.Since(start))
+			log.Printf("%-6s %-5s\t%-22s\t%s", r.Method, r.URL.Path, remoteAddr, time.Since(start))
 		} else {
-			log.Printf("%-6s %-5s (%s,%s)\t%-22s\t%s", r.Method, r.URL.Path, r.FormValue("lat"), r.FormValue("lng"), r.RemoteAddr, time.Since(start))
+			log.Printf("%-6s %-5s (%-20s,%-20s)\t%-22s\t%s", r.Method, r.URL.Path, r.FormValue("lat"), r.FormValue("lng"), remoteAddr, time.Since(start))
 		}
 	}
 }
