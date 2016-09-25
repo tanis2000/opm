@@ -22,9 +22,10 @@ var ErrBusy = errors.New("All our minions are busy")
 func listenAndServe() {
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/s", logDecorator(statusHandler))
-	mux.HandleFunc("/q", logDecorator(requestHandler))
-	mux.HandleFunc("/c", logDecorator(cacheHandler))
+	mux.HandleFunc("/s", handleFuncDecorator(statusHandler))
+	mux.HandleFunc("/q", handleFuncDecorator(requestHandler))
+	mux.HandleFunc("/c", handleFuncDecorator(cacheHandler))
+	mux.HandleFunc("/b", addBlacklist)
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 
 	// Start listening
@@ -233,6 +234,18 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	}
 	// Parse and return result
 	return parseMapObjects(mapObjects), nil
+}
+
+func addBlacklist(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("secret") != settings.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if r.FormValue("addr") != "" {
+		blacklist[r.FormValue("addr")] = true
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, r.FormValue("addr"))
+	}
 }
 
 func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {

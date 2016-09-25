@@ -88,19 +88,24 @@ func NewTrainerFromDb() (*util.TrainerSession, error) {
 	return trainer, nil
 }
 
-func logDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Log start time
-		start := time.Now()
-		// Handle request
-		inner(w, r)
 		// Metadata
 		remoteAddr := r.RemoteAddr
 		if r.Header.Get("CF-Connecting-IP") != "" {
 			remoteAddr = r.Header.Get("CF-Connecting-IP")
 		}
-		dt := time.Since(start)
+		// Check blacklist
+		if blacklist[remoteAddr] {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		// Log start time
+		start := time.Now()
+		// Handle request
+		inner(w, r)
 		// Metrics
+		dt := time.Since(start)
 		if r.URL.Path == "/q" {
 			metrics.ScansPerMinute.Incr(1)
 			scansPerMinute.Set(metrics.ScansPerMinute.Rate())
