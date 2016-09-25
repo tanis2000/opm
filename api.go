@@ -25,6 +25,8 @@ func listenAndServe() {
 	mux.HandleFunc("/s", logDecorator(statusHandler))
 	mux.HandleFunc("/q", logDecorator(requestHandler))
 	mux.HandleFunc("/c", logDecorator(cacheHandler))
+	mux.Handle("/debug/vars", http.DefaultServeMux)
+
 	// Start listening
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,
@@ -39,18 +41,19 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 	var objects []opm.MapObject
 	// Check method
 	if r.Method != "POST" {
-		writeApiResponse(w, false, errors.New("Wrong method").Error(), objects)
+		writeCacheResponse(w, false, errors.New("Wrong method").Error(), objects)
 		return
 	}
 	// Get Latitude and Longitude
 	lat, err := strconv.ParseFloat(r.FormValue("lat"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), objects)
+		writeCacheResponse(w, false, "Wrong format", objects)
 		return
 	}
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), objects)
+		writeCacheResponse(w, false, "Wrong format", objects)
+		return
 	}
 	// Pokemon/Gym/Pokestop filter
 	filter := make([]int, 0)
@@ -70,28 +73,28 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 	// Get objects from db
 	objects, err = database.GetMapObjects(lat, lng, filter, settings.CacheRadius)
 	if err != nil {
-		writeApiResponse(w, false, "Failed to get MapObjects from DB", objects)
+		writeCacheResponse(w, false, "Failed to get MapObjects from DB", objects)
 		log.Println(err)
 		return
 	}
-	writeApiResponse(w, true, "", objects)
+	writeCacheResponse(w, true, "", objects)
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Check method
 	if r.Method != "POST" {
-		writeApiResponse(w, false, errors.New("Wrong method").Error(), nil)
+		writeScanResponse(w, false, errors.New("Wrong method").Error(), nil)
 		return
 	}
 	// Get Latitude and Longitude
 	lat, err := strconv.ParseFloat(r.FormValue("lat"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), nil)
+		writeScanResponse(w, false, err.Error(), nil)
 		return
 	}
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
-		writeApiResponse(w, false, err.Error(), nil)
+		writeScanResponse(w, false, err.Error(), nil)
 	}
 	// Get trainer from queue
 	trainer, err := trainerQueue.Get(5 * time.Second)
@@ -99,13 +102,13 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		// Timeout -> try setup a new one
 		p, err := database.GetProxy()
 		if err != nil {
-			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, ErrBusy.Error(), nil)
 			return
 		}
 		a, err := database.GetAccount()
 		if err != nil {
 			database.ReturnProxy(p)
-			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, ErrBusy.Error(), nil)
 			return
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
@@ -114,7 +117,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
 	// Create context
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	trainer.Context = ctx
 	// Perform scan
@@ -136,7 +139,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			delete(status, trainer.Account.Username)
 			database.ReturnAccount(trainer.Account)
 			log.Println("No proxies available")
-			writeApiResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, ErrBusy.Error(), nil)
 			return
 		}
 	}
@@ -156,21 +159,42 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Final error check
 	if err != nil && !retrySuccess {
-		writeApiResponse(w, false, err.Error(), nil)
+		writeScanResponse(w, false, err.Error(), nil)
 		return
 	}
 	//Save to db
 	for _, o := range mapObjects {
 		database.AddMapObject(o)
 	}
-	writeApiResponse(w, true, "", mapObjects)
+	writeScanResponse(w, true, "", mapObjects)
+}
+
+func writeCacheResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
+	if !ok {
+		metrics.CacheRequestFailsPerMinute.Incr(1)
+		cacheFailsPerMinute.Set(metrics.CacheRequestFailsPerMinute.Rate())
+	}
+	writeApiResponse(w, ok, e, response)
+}
+
+func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
+	if !ok {
+		if e == ErrBusy.Error() {
+			metrics.ScanBusyPerMinute.Incr(1)
+			scanBusyPerMinute.Set(metrics.ScanBusyPerMinute.Rate())
+		} else {
+			metrics.ScanFailsPerMinute.Incr(1)
+			scanFailsPerMinute.Set(metrics.ScanFailsPerMinute.Rate())
+		}
+	}
+	writeApiResponse(w, ok, e, response)
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	w.Header().Add("Access-Control-Allow-Origin", settings.AllowOrigin)
 	w.Header().Add("Content-Type", "application/json")
 
-	if e != "" && e != ErrBusy.Error() {
+	if e != "" && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
 		e = "Scan failed"
 	}
 
@@ -185,9 +209,11 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	// Set location
 	trainer.MoveTo(&api.Location{Lat: lat, Lon: lng})
 	// Login trainer
+	<-ticks
 	err := trainer.Login()
 	if err == api.ErrInvalidAuthToken {
 		trainer.ForceLogin = true
+		<-ticks
 		err = trainer.Login()
 	}
 	if err != nil {

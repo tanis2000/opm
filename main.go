@@ -18,6 +18,7 @@ var crypto api.Crypto
 var trainerQueue *util.TrainerQueue
 var database *db.OpenMapDb
 var status Status
+var metrics *ScannerMetrics
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ltime)
@@ -31,6 +32,7 @@ func main() {
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
+	metrics = NewScannerMetrics()
 	// Init db
 	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
 	if err != nil {
