@@ -59,13 +59,13 @@ func NewScannerMetrics() *ScannerMetrics {
 }
 
 type scannerMetricsData struct {
-	ScansPerMinute             int64
-	ScanFailsPerMinute         int64
-	ScanBusyPerMinute          int64
-	ScanResponseTimesMs        []int64
-	CacheRequestsPerMinute     int64
-	CacheRequestFailsPerMinute int64
-	CacheResponseTimesNs       []int64
+	ScansPerMinute             int64   `json:"scans_per_minute"`
+	ScanFailsPerMinute         int64   `json:"scan_fails_per_minute"`
+	ScanBusyPerMinute          int64   `json:"scan_busy_per_minute"`
+	ScanResponseTimesMs        []int64 `json:"scan_reponse_times_ms"`
+	CacheRequestsPerMinute     int64   `json:"cache_requests_per_minute"`
+	CacheRequestFailsPerMinute int64   `json:"cache_fails_per_minute"`
+	CacheResponseTimesNs       []int64 `json:"cache_response_times_ns"`
 }
 
 func (s *ScannerMetrics) String() string {
