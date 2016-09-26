@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"expvar"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -33,13 +32,54 @@ type Settings struct {
 type Status map[string]opm.StatusEntry
 
 type ScannerMetrics struct {
-	ScansPerMinute             *ratecounter.RateCounter
-	ScanFailsPerMinute         *ratecounter.RateCounter
-	ScanBusyPerMinute          *ratecounter.RateCounter
+	// Requests
+	BlockedRequestsPerMinute *ratecounter.RateCounter
+	// Scans
+	ScansPerMinute      *ratecounter.RateCounter
+	ScanFailsPerMinute  *ratecounter.RateCounter
+	ScanBusyPerMinute   *ratecounter.RateCounter
+	ScanResponseTimesMs *RingBuffer
+	// Cache
 	CacheRequestsPerMinute     *ratecounter.RateCounter
 	CacheRequestFailsPerMinute *ratecounter.RateCounter
 	CacheResponseTimesNs       *RingBuffer
-	ScanResponseTimesMs        *RingBuffer
+}
+
+func NewScannerMetrics() *ScannerMetrics {
+	return &ScannerMetrics{
+		BlockedRequestsPerMinute:   ratecounter.NewRateCounter(time.Minute),
+		ScansPerMinute:             ratecounter.NewRateCounter(time.Minute),
+		ScanFailsPerMinute:         ratecounter.NewRateCounter(time.Minute),
+		ScanBusyPerMinute:          ratecounter.NewRateCounter(time.Minute),
+		ScanResponseTimesMs:        NewBuffer(256),
+		CacheRequestsPerMinute:     ratecounter.NewRateCounter(time.Minute),
+		CacheRequestFailsPerMinute: ratecounter.NewRateCounter(time.Minute),
+		CacheResponseTimesNs:       NewBuffer(256),
+	}
+}
+
+type scannerMetricsData struct {
+	ScansPerMinute             int64
+	ScanFailsPerMinute         int64
+	ScanBusyPerMinute          int64
+	ScanResponseTimesMs        []int64
+	CacheRequestsPerMinute     int64
+	CacheRequestFailsPerMinute int64
+	CacheResponseTimesNs       []int64
+}
+
+func (s *ScannerMetrics) String() string {
+	data := scannerMetricsData{
+		ScansPerMinute:             s.ScanBusyPerMinute.Rate(),
+		ScanFailsPerMinute:         s.ScanFailsPerMinute.Rate(),
+		ScanBusyPerMinute:          s.ScanBusyPerMinute.Rate(),
+		ScanResponseTimesMs:        s.ScanResponseTimesMs.buffer,
+		CacheRequestsPerMinute:     s.CacheRequestsPerMinute.Rate(),
+		CacheRequestFailsPerMinute: s.CacheRequestFailsPerMinute.Rate(),
+		CacheResponseTimesNs:       s.CacheResponseTimesNs.buffer,
+	}
+	bytes, _ := json.Marshal(data)
+	return string(bytes)
 }
 
 type RingBuffer struct {
@@ -83,26 +123,6 @@ func NewBuffer(length int) *RingBuffer {
 	return b
 }
 
-var (
-	scansPerMinute         = expvar.NewInt("scans_per_minute")
-	scanFailsPerMinute     = expvar.NewInt("scan_fails_per_minute")
-	scanBusyPerMinute      = expvar.NewInt("scan_busy_busy_per_minute")
-	cacheRequestsPerMinute = expvar.NewInt("cache_requests_per_minute")
-	cacheFailsPerMinute    = expvar.NewInt("cache_fails_per_minute")
-)
-
-func NewScannerMetrics() *ScannerMetrics {
-	return &ScannerMetrics{
-		ScansPerMinute:             ratecounter.NewRateCounter(time.Minute),
-		ScanFailsPerMinute:         ratecounter.NewRateCounter(time.Minute),
-		ScanBusyPerMinute:          ratecounter.NewRateCounter(time.Minute),
-		CacheRequestsPerMinute:     ratecounter.NewRateCounter(time.Minute),
-		CacheRequestFailsPerMinute: ratecounter.NewRateCounter(time.Minute),
-		ScanResponseTimesMs:        NewBuffer(256),
-		CacheResponseTimesNs:       NewBuffer(256),
-	}
-}
-
 func loadSettings() (Settings, error) {
 	// Read from file
 	bytes, err := ioutil.ReadFile("config.json")
@@ -143,6 +163,7 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		// Check blacklist
 		if blacklist[remoteAddr] {
 			w.WriteHeader(http.StatusForbidden)
+			metrics.BlockedRequestsPerMinute.Incr(1)
 			return
 		}
 		// Log start time
@@ -154,11 +175,9 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		if r.URL.Path == "/q" {
 			metrics.ScansPerMinute.Incr(1)
 			metrics.ScanResponseTimesMs.Add(dt.Nanoseconds() / 1000000)
-			scansPerMinute.Set(metrics.ScansPerMinute.Rate())
 		} else if r.URL.Path == "/c" {
 			metrics.CacheRequestsPerMinute.Incr(1)
 			metrics.CacheResponseTimesNs.Add(dt.Nanoseconds())
-			cacheRequestsPerMinute.Set(metrics.CacheRequestsPerMinute.Rate())
 		}
 		// Logging
 		if r.Method != "POST" {

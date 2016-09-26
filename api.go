@@ -173,7 +173,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 func writeCacheResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	if !ok {
 		metrics.CacheRequestFailsPerMinute.Incr(1)
-		cacheFailsPerMinute.Set(metrics.CacheRequestFailsPerMinute.Rate())
 	}
 	writeApiResponse(w, ok, e, response)
 }
@@ -182,10 +181,8 @@ func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.
 	if !ok {
 		if e == ErrBusy.Error() {
 			metrics.ScanBusyPerMinute.Incr(1)
-			scanBusyPerMinute.Set(metrics.ScanBusyPerMinute.Rate())
 		} else {
 			metrics.ScanFailsPerMinute.Incr(1)
-			scanFailsPerMinute.Set(metrics.ScanFailsPerMinute.Rate())
 		}
 	}
 	writeApiResponse(w, ok, e, response)

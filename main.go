@@ -36,10 +36,9 @@ func main() {
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
 	blacklist = make(map[string]bool)
-	// Metrics/expvar
+	// Metrics
 	metrics = NewScannerMetrics()
-	expvar.Publish("scan_reponse_times_ms", metrics.ScanResponseTimesMs)
-	expvar.Publish("cache_reponse_times_ns", metrics.CacheResponseTimesNs)
+	expvar.Publish("scanner_metrics", metrics)
 	// Init db
 	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
 	if err != nil {
