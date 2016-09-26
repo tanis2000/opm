@@ -38,6 +38,49 @@ type ScannerMetrics struct {
 	ScanBusyPerMinute          *ratecounter.RateCounter
 	CacheRequestsPerMinute     *ratecounter.RateCounter
 	CacheRequestFailsPerMinute *ratecounter.RateCounter
+	CacheResponseTimesNs       *RingBuffer
+	ScanResponseTimesMs        *RingBuffer
+}
+
+type RingBuffer struct {
+	buffer []int64
+	c      chan int64
+}
+
+func (r *RingBuffer) Add(value int64) {
+	r.c <- value
+}
+
+func (r *RingBuffer) Buffer() []int64 {
+	var output []int64
+	copy(r.buffer, output)
+	return output
+}
+
+func (r *RingBuffer) String() string {
+	data, _ := json.Marshal(r.buffer)
+	return string(data)
+}
+
+func NewBuffer(length int) *RingBuffer {
+	b := &RingBuffer{
+		buffer: make([]int64, length),
+		c:      make(chan int64),
+	}
+	// Goroutine for handling Add()
+	go func(rb *RingBuffer) {
+		i := 0
+		for {
+			v := <-rb.c
+			rb.buffer[i] = v
+			i++
+			if i > len(rb.buffer) {
+				i = 0
+			}
+		}
+	}(b)
+	// Return buffer
+	return b
 }
 
 var (
@@ -55,6 +98,8 @@ func NewScannerMetrics() *ScannerMetrics {
 		ScanBusyPerMinute:          ratecounter.NewRateCounter(time.Minute),
 		CacheRequestsPerMinute:     ratecounter.NewRateCounter(time.Minute),
 		CacheRequestFailsPerMinute: ratecounter.NewRateCounter(time.Minute),
+		ScanResponseTimesMs:        NewBuffer(256),
+		CacheResponseTimesNs:       NewBuffer(256),
 	}
 }
 
@@ -108,9 +153,11 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		dt := time.Since(start)
 		if r.URL.Path == "/q" {
 			metrics.ScansPerMinute.Incr(1)
+			metrics.ScanResponseTimesMs.Add(dt.Nanoseconds() / 1000000)
 			scansPerMinute.Set(metrics.ScansPerMinute.Rate())
 		} else if r.URL.Path == "/c" {
 			metrics.CacheRequestsPerMinute.Incr(1)
+			metrics.CacheResponseTimesNs.Add(dt.Nanoseconds())
 			cacheRequestsPerMinute.Set(metrics.CacheRequestsPerMinute.Rate())
 		}
 		// Logging

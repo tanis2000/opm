@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"expvar"
+
 	"github.com/femot/gophermon/encrypt"
 	"github.com/femot/openmap-tools/db"
 	"github.com/femot/openmap-tools/opm"
@@ -33,8 +35,11 @@ func main() {
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = settings.ProxyHost
-	metrics = NewScannerMetrics()
 	blacklist = make(map[string]bool)
+	// Metrics/expvar
+	metrics = NewScannerMetrics()
+	expvar.Publish("scan_reponse_times_ms", metrics.ScanResponseTimesMs)
+	expvar.Publish("cache_reponse_times_ns", metrics.CacheResponseTimesNs)
 	// Init db
 	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
 	if err != nil {
