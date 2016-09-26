@@ -21,17 +21,17 @@ var stats *Stats
 
 type Stats struct {
 	// Accounts
-	AccountsInUse  int
-	AccountsBanned int
-	AccountsTotal  int
+	AccountsInUse  int `json:"accounts_in_use"`
+	AccountsBanned int `json:"accounts_banned"`
+	AccountsTotal  int `json:"accounts_total"`
 	// Proxies
-	ProxiesAlive int
-	ProxiesInUse int
+	ProxiesAlive int `json:"proxies_alive"`
+	ProxiesInUse int `json:"proxies_in_use"`
 	// MapObjects
-	PokemonTotal int
-	PokemonAlive int
-	Gyms         int
-	Pokestops    int
+	PokemonTotal int `json:"pokemon_total"`
+	PokemonAlive int `json:"pokemon_alive"`
+	Gyms         int `json:"gyms"`
+	Pokestops    int `json:"pokestops"`
 }
 
 func (s *Stats) String() string {
