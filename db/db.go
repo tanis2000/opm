@@ -148,6 +148,21 @@ func (db *OpenMapDb) Cleanup(list []opm.StatusEntry) (int, error) {
 
 }
 
+// MapObjectStats returns stats about MapObjects
+func (db *OpenMapDb) MapObjectStats() (int, int, int, int) {
+	c := db.mongoSession.DB(db.DbName).C("Objects")
+	totalPokemon, _ := c.Find(bson.M{"type": opm.POKEMON}).Count()
+	alivePokemon, _ := c.Find(bson.M{
+		"type": opm.POKEMON,
+		"expiry": bson.M{
+			"$gt": time.Now().Unix(),
+		},
+	}).Count()
+	gyms, _ := c.Find(bson.M{"type": opm.GYM}).Count()
+	pokestops, _ := c.Find(bson.M{"type": opm.POKESTOP}).Count()
+	return totalPokemon, alivePokemon, gyms, pokestops
+}
+
 // AddPokemon adds a pokemon to the db
 func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 	o := object{
