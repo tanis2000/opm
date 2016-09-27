@@ -43,6 +43,10 @@ func LoadTrainers(accounts []opm.Account, feed api.Feed, crypto api.Crypto) []*T
 	return trainers
 }
 
+func (t *TrainerSession) IsLoggedIn() bool {
+	return !t.session.IsExpired()
+}
+
 // Login initializes a (new) session. This can be used to login again, after the session is expired.
 func (t *TrainerSession) Login() error {
 	if !t.session.IsExpired() && !t.ForceLogin {
