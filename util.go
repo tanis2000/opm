@@ -59,24 +59,79 @@ func NewScannerMetrics() *ScannerMetrics {
 }
 
 type scannerMetricsData struct {
-	ScansPerMinute             int64   `json:"scans_per_minute"`
-	ScanFailsPerMinute         int64   `json:"scan_fails_per_minute"`
-	ScanBusyPerMinute          int64   `json:"scan_busy_per_minute"`
-	ScanResponseTimesMs        []int64 `json:"scan_reponse_times_ms"`
-	CacheRequestsPerMinute     int64   `json:"cache_requests_per_minute"`
-	CacheRequestFailsPerMinute int64   `json:"cache_fails_per_minute"`
-	CacheResponseTimesNs       []int64 `json:"cache_response_times_ns"`
+	ScansPerMinute     int64 `json:"scans_per_minute"`
+	ScanFailsPerMinute int64 `json:"scan_fails_per_minute"`
+	ScanBusyPerMinute  int64 `json:"scan_busy_per_minute"`
+
+	ScanResponseTimesMax int64   `json:"scan_reponse_times_max"`
+	ScanResponseTimesMin int64   `json:"scan_response_times_min"`
+	ScanResponseTimesAvg float64 `json:"scan_response_times_avg"`
+
+	CacheRequestsPerMinute     int64 `json:"cache_requests_per_minute"`
+	CacheRequestFailsPerMinute int64 `json:"cache_fails_per_minute"`
+
+	CacheResponseTimesMax int64   `json:"cache_reponse_times_max"`
+	CacheResponseTimesMin int64   `json:"cache_response_times_min"`
+	CacheResponseTimesAvg float64 `json:"cache_response_times_avg"`
 }
 
 func (s *ScannerMetrics) String() string {
+	scanTimesMax := int64(0)
+	scanTimesMin := int64(0)
+	scanTimesSum := int64(0)
+	cacheTimesMax := int64(0)
+	cacheTimesMin := int64(0)
+	cacheTimesSum := int64(0)
+	scanTimesAvg := float64(0)
+	cacheTimesAvg := float64(0)
+
+	// Stats
+	scanTimes := s.ScanResponseTimesMs.Buffer()
+
+	if len(scanTimes) > 0 {
+		scanTimesMax = scanTimes[0]
+		scanTimesMin = scanTimes[0]
+		scanTimesSum = scanTimes[0]
+		for i := 1; i < len(scanTimes); i++ {
+			if scanTimes[i] > scanTimesMax {
+				scanTimesMax = scanTimes[i]
+			} else if scanTimes[i] < scanTimesMin {
+				scanTimesMin = scanTimes[i]
+			}
+			scanTimesSum += scanTimes[i]
+		}
+		scanTimesAvg = float64(scanTimesSum) / float64(len(scanTimes))
+	}
+
+	cacheTimes := s.CacheResponseTimesNs.Buffer()
+
+	if len(cacheTimes) > 0 {
+		cacheTimesMax = cacheTimes[0]
+		cacheTimesMin = cacheTimes[0]
+		cacheTimesSum = cacheTimes[0]
+		for i := 1; i < len(cacheTimes); i++ {
+			if cacheTimes[i] > cacheTimesMax {
+				cacheTimesMax = cacheTimes[i]
+			} else if cacheTimes[i] < cacheTimesMin {
+				cacheTimesMin = cacheTimes[i]
+			}
+			cacheTimesSum += cacheTimes[i]
+		}
+		cacheTimesAvg = float64(cacheTimesSum) / float64(len(cacheTimes))
+	}
+
 	data := scannerMetricsData{
 		ScansPerMinute:             s.ScanBusyPerMinute.Rate(),
 		ScanFailsPerMinute:         s.ScanFailsPerMinute.Rate(),
 		ScanBusyPerMinute:          s.ScanBusyPerMinute.Rate(),
-		ScanResponseTimesMs:        s.ScanResponseTimesMs.buffer,
+		ScanResponseTimesMin:       scanTimesMin,
+		ScanResponseTimesMax:       scanTimesMax,
+		ScanResponseTimesAvg:       scanTimesAvg,
 		CacheRequestsPerMinute:     s.CacheRequestsPerMinute.Rate(),
 		CacheRequestFailsPerMinute: s.CacheRequestFailsPerMinute.Rate(),
-		CacheResponseTimesNs:       s.CacheResponseTimesNs.buffer,
+		CacheResponseTimesAvg:      cacheTimesAvg,
+		CacheResponseTimesMax:      cacheTimesMax,
+		CacheResponseTimesMin:      cacheTimesMin,
 	}
 	bytes, _ := json.Marshal(data)
 	return string(bytes)
@@ -84,6 +139,7 @@ func (s *ScannerMetrics) String() string {
 
 type RingBuffer struct {
 	buffer []int64
+	cap    int
 	c      chan int64
 }
 
@@ -92,8 +148,8 @@ func (r *RingBuffer) Add(value int64) {
 }
 
 func (r *RingBuffer) Buffer() []int64 {
-	var output []int64
-	copy(r.buffer, output)
+	output := make([]int64, len(r.buffer))
+	copy(output, r.buffer)
 	return output
 }
 
@@ -102,13 +158,21 @@ func (r *RingBuffer) String() string {
 	return string(data)
 }
 
-func NewBuffer(length int) *RingBuffer {
+func NewBuffer(cap int) *RingBuffer {
 	b := &RingBuffer{
-		buffer: make([]int64, length),
+		buffer: make([]int64, 0),
 		c:      make(chan int64),
+		cap:    cap,
 	}
 	// Goroutine for handling Add()
 	go func(rb *RingBuffer) {
+		for {
+			v := <-rb.c
+			rb.buffer = append(rb.buffer, v)
+			if len(rb.buffer) >= rb.cap {
+				break
+			}
+		}
 		i := 0
 		for {
 			v := <-rb.c
