@@ -206,18 +206,28 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	// Set location
 	trainer.MoveTo(&api.Location{Lat: lat, Lon: lng})
 	// Login trainer
-	<-ticks
-	err := trainer.Login()
-	if err == api.ErrInvalidAuthToken {
-		trainer.ForceLogin = true
-		<-ticks
-		err = trainer.Login()
-	}
-	if err != nil {
-		if err != api.ErrProxyDead {
-			log.Printf("Login error (%s): %s\n", trainer.Account.Username, err.Error())
+	if !trainer.IsLoggedIn() {
+		select {
+		case <-loginTicks:
+		case <-time.After(10 * time.Second):
+			return nil, ErrBusy
 		}
-		return nil, err
+		err := trainer.Login()
+		if err == api.ErrInvalidAuthToken {
+			trainer.ForceLogin = true
+			select {
+			case <-loginTicks:
+			case <-time.After(10 * time.Second):
+				return nil, ErrBusy
+			}
+			err = trainer.Login()
+		}
+		if err != nil {
+			if err != api.ErrProxyDead {
+				log.Printf("Login error (%s): %s\n", trainer.Account.Username, err.Error())
+			}
+			return nil, err
+		}
 	}
 	// Query api
 	<-ticks

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
+	"expvar"
 	"log"
 	"time"
-
-	"expvar"
 
 	"github.com/femot/gophermon/encrypt"
 	"github.com/femot/openmap-tools/db"
@@ -15,6 +15,7 @@ import (
 
 var settings Settings
 var ticks chan bool
+var loginTicks chan bool
 var feed api.Feed
 var crypto api.Crypto
 var trainerQueue *util.TrainerQueue
@@ -24,7 +25,7 @@ var metrics *ScannerMetrics
 var blacklist map[string]bool
 
 func main() {
-	log.SetFlags(log.Lshortfile | log.Ltime)
+	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	var err error
 	// Load settings
 	settings, err = loadSettings()
@@ -58,9 +59,38 @@ func main() {
 			break
 		}
 	}
+	// Queue up all the trainer logins
+	go func(treners []*util.TrainerSession) {
+		count := 0
+		for _, t := range treners {
+			if !t.IsLoggedIn() {
+				<-loginTicks
+				log.Printf("Logging in %s", t.Account.Username)
+				t.Context, _ = context.WithTimeout(context.Background(), 10*time.Second)
+				err := t.Login()
+				if err != nil {
+					log.Println(err)
+				}
+			} else {
+				count++
+				if count >= len(treners) {
+					break
+				}
+			}
+		}
+		log.Println("All treners logged in")
+	}(trainers)
 	// Init trainerQueue
 	trainerQueue = util.NewTrainerQueue(trainers)
 	// Start ticker
+	loginTicks = make(chan bool)
+	go func(d time.Duration) {
+		for {
+			loginTicks <- true
+			time.Sleep(d)
+		}
+	}(5 * time.Second)
+
 	ticks = make(chan bool)
 	go func(d time.Duration) {
 		for {
