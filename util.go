@@ -114,7 +114,7 @@ func NewBuffer(length int) *RingBuffer {
 			v := <-rb.c
 			rb.buffer[i] = v
 			i++
-			if i > len(rb.buffer) {
+			if i >= len(rb.buffer) {
 				i = 0
 			}
 		}
