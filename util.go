@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/paulbellamy/ratecounter"
@@ -219,6 +220,8 @@ func NewTrainerFromDb() (*util.TrainerSession, error) {
 
 func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Log start time
+		start := time.Now()
 		// Metadata
 		remoteAddr := r.RemoteAddr
 		if r.Header.Get("CF-Connecting-IP") != "" {
@@ -230,8 +233,13 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 			metrics.BlockedRequestsPerMinute.Incr(1)
 			return
 		}
-		// Log start time
-		start := time.Now()
+		// ACAH headers
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			if strings.Contains(origin, settings.AllowOrigin) {
+				w.Header().Add("Access-Control-Allow-Origin", origin)
+			}
+		}
 		// Handle request
 		inner(w, r)
 		// Metrics

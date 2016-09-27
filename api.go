@@ -189,7 +189,6 @@ func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.
 }
 
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
-	w.Header().Add("Access-Control-Allow-Origin", settings.AllowOrigin)
 	w.Header().Add("Content-Type", "application/json")
 
 	if e != "" && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
