@@ -121,7 +121,7 @@ func (s *ScannerMetrics) String() string {
 	}
 
 	data := scannerMetricsData{
-		ScansPerMinute:             s.ScanBusyPerMinute.Rate(),
+		ScansPerMinute:             s.ScansPerMinute.Rate(),
 		ScanFailsPerMinute:         s.ScanFailsPerMinute.Rate(),
 		ScanBusyPerMinute:          s.ScanBusyPerMinute.Rate(),
 		ScanResponseTimesMin:       scanTimesMin,
