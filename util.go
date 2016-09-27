@@ -63,7 +63,7 @@ type scannerMetricsData struct {
 	ScanFailsPerMinute int64 `json:"scan_fails_per_minute"`
 	ScanBusyPerMinute  int64 `json:"scan_busy_per_minute"`
 
-	ScanResponseTimesMax int64   `json:"scan_res:ponse_times_max"`
+	ScanResponseTimesMax int64   `json:"scan_response_times_max"`
 	ScanResponseTimesMin int64   `json:"scan_response_times_min"`
 	ScanResponseTimesAvg float64 `json:"scan_response_times_avg"`
 
