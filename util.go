@@ -63,14 +63,14 @@ type scannerMetricsData struct {
 	ScanFailsPerMinute int64 `json:"scan_fails_per_minute"`
 	ScanBusyPerMinute  int64 `json:"scan_busy_per_minute"`
 
-	ScanResponseTimesMax int64   `json:"scan_reponse_times_max"`
+	ScanResponseTimesMax int64   `json:"scan_res:ponse_times_max"`
 	ScanResponseTimesMin int64   `json:"scan_response_times_min"`
 	ScanResponseTimesAvg float64 `json:"scan_response_times_avg"`
 
 	CacheRequestsPerMinute     int64 `json:"cache_requests_per_minute"`
 	CacheRequestFailsPerMinute int64 `json:"cache_fails_per_minute"`
 
-	CacheResponseTimesMax int64   `json:"cache_reponse_times_max"`
+	CacheResponseTimesMax int64   `json:"cache_response_times_max"`
 	CacheResponseTimesMin int64   `json:"cache_response_times_min"`
 	CacheResponseTimesAvg float64 `json:"cache_response_times_avg"`
 }
