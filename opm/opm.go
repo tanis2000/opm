@@ -27,14 +27,15 @@ type ApiResponse struct {
 }
 
 type MapObject struct {
-	Type      int
-	PokemonId int
-	Id        string
-	Lat       float64
-	Lng       float64
-	Expiry    int64
-	Lured     bool
-	Team      int
+	Type         int     `json:"type"`
+	PokemonId    int     `json:"pokemonId,omitempty"`
+	SpawnpointId string  `json:"-"`
+	Id           string  `json:""`
+	Lat          float64 `json:"lat"`
+	Lng          float64 `json:"lng"`
+	Expiry       int64   `json:"expiry,omitempty"`
+	Lured        bool    `json:"lured,omitempty"`
+	Team         int     `json:"team,omitempty"`
 }
 
 type Pokemon struct {

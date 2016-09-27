@@ -28,13 +28,14 @@ type location struct {
 }
 
 type object struct {
-	Type      int
-	PokemonId int
-	Id        string
-	Loc       location
-	Expiry    int64
-	Lured     bool
-	Team      int
+	Type         int
+	PokemonId    int
+	SpawnpointId string
+	Id           string
+	Loc          location
+	Expiry       int64
+	Lured        bool
+	Team         int
 }
 
 // NewOpenMapDb creates a new connection to
@@ -209,9 +210,10 @@ func (db *OpenMapDb) AddGym(g opm.Gym) {
 // AddMapObject adds a opm.MapObject to the db
 func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 	o := object{
-		Type:      m.Type,
-		PokemonId: m.PokemonId,
-		Id:        m.Id,
+		Type:         m.Type,
+		PokemonId:    m.PokemonId,
+		SpawnpointId: m.SpawnpointId,
+		Id:           m.Id,
 		Loc: location{
 			Type:        "Point",
 			Coordinates: []float64{m.Lng, m.Lat},
