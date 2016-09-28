@@ -95,7 +95,7 @@ func main() {
 			loginTicks <- true
 			time.Sleep(d)
 		}
-	}(5 * time.Second)
+	}(1 * time.Second)
 
 	ticks = make(chan bool)
 	go func(d time.Duration) {
