@@ -18,6 +18,9 @@ import (
 )
 
 var ErrBusy = errors.New("All our minions are busy")
+var ErrTimeout = errors.New("Scan timed out")
+
+const REQUEST_TIMEOUT = 15
 
 func listenAndServe() {
 	// Setup routes
@@ -82,6 +85,9 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
+	// Create a context
+	ctx, cancel := context.WithTimeout(context.Background(), REQUEST_TIMEOUT*time.Second)
+	defer cancel()
 	// Check method
 	if r.Method != "POST" {
 		writeScanResponse(w, false, errors.New("Wrong method").Error(), nil)
@@ -96,6 +102,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
 		writeScanResponse(w, false, err.Error(), nil)
+		return
 	}
 	// Get trainer from queue
 	trainer, err := trainerQueue.Get(5 * time.Second)
@@ -117,14 +124,16 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
-	// Create context
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	trainer.Context = ctx
 	// Perform scan
 	mapObjects, err := getMapResult(trainer, lat, lng)
 	// Error handling
 	retrySuccess := false
+	// Check error/timeout
+	if err != nil && ctx.Err() != nil {
+		writeScanResponse(w, false, ErrTimeout.Error(), mapObjects)
+		return
+	}
 	// Handle proxy death
 	if err != nil && err == api.ErrProxyDead {
 		trainer.Proxy.Dead = true
@@ -191,7 +200,7 @@ func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.
 func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	w.Header().Add("Content-Type", "application/json")
 
-	if e != "" && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
+	if e != "" && e != ErrTimeout.Error() && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
 		e = "Scan failed"
 	}
 
@@ -209,16 +218,16 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	if !trainer.IsLoggedIn() {
 		select {
 		case <-loginTicks:
-		case <-time.After(10 * time.Second):
-			return nil, ErrBusy
+		case <-trainer.Context.Done():
+			return nil, ErrTimeout
 		}
 		err := trainer.Login()
 		if err == api.ErrInvalidAuthToken {
 			trainer.ForceLogin = true
 			select {
 			case <-loginTicks:
-			case <-time.After(10 * time.Second):
-				return nil, ErrBusy
+			case <-trainer.Context.Done():
+				return nil, ErrTimeout
 			}
 			err = trainer.Login()
 		}
