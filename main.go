@@ -84,7 +84,7 @@ func main() {
 				}
 			}
 		}
-		log.Println("All treners logged in")
+		log.Println("All trainers logged in")
 	}(trainers)
 	// Init trainerQueue
 	trainerQueue = util.NewTrainerQueue(trainers)
