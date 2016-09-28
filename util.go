@@ -189,10 +189,14 @@ func NewBuffer(cap int) *RingBuffer {
 }
 
 func loadSettings() (Settings, error) {
-	// Read from file
-	bytes, err := ioutil.ReadFile("config.json")
+	// Try to find system settings file
+	bytes, err := ioutil.ReadFile("/etc/opm/scanner.json")
 	if err != nil {
-		return Settings{}, err
+		// Use local config
+		bytes, err = ioutil.ReadFile("config.json")
+		if err != nil {
+			return Settings{}, err
+		}
 	}
 	// Unmarshal json
 	var settings Settings
