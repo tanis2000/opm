@@ -26,6 +26,11 @@ type ApiResponse struct {
 	MapObjects []MapObject
 }
 
+type ApiSubmission struct {
+	Key        string
+	MapObjects []MapObject
+}
+
 type MapObject struct {
 	Type         int     `json:"type"`
 	PokemonId    int     `json:"pokemonId,omitempty"`
@@ -36,6 +41,7 @@ type MapObject struct {
 	Expiry       int64   `json:"expiry,omitempty"`
 	Lured        bool    `json:"lured,omitempty"`
 	Team         int     `json:"team,omitempty"`
+	Source       string  `json:"-"`
 }
 
 type Pokemon struct {
@@ -63,4 +69,10 @@ type Gym struct {
 type StatusEntry struct {
 	AccountName string
 	ProxyId     int64
+}
+
+type ApiKey struct {
+	Key      string
+	Verified bool
+	Enabled  bool
 }

@@ -228,6 +228,12 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 	}
 }
 
+func (db *OpenMapDb) AddMapObjects(m []opm.MapObject) {
+	for _, o := range m {
+		db.AddMapObject(o)
+	}
+}
+
 // GetMapObjects returns all objects within a radius (in meters) of the given lat/lng
 func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([]opm.MapObject, error) {
 	// Build query
@@ -429,4 +435,18 @@ func (db *OpenMapDb) ReturnProxy(p opm.Proxy) {
 	db_col := bson.M{"id": p.Id}
 	change := proxy{Id: p.Id, Dead: false, Use: false}
 	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
+}
+
+func (db *OpenMapDb) AddApiKey(k opm.ApiKey) error {
+	return db.mongoSession.DB(db.DbName).C("Keys").Insert(k)
+}
+
+func (db *OpenMapDb) GetApiKey(k string) (opm.ApiKey, error) {
+	var key opm.ApiKey
+	err := db.mongoSession.DB(db.DbName).C("Keys").Find(bson.M{"key": k}).One(&key)
+	return key, err
+}
+
+func (db *OpenMapDb) UpdateApiKey(k opm.ApiKey) error {
+	return db.mongoSession.DB(db.DbName).C("Keys").Update(bson.M{"key": k.Key}, k)
 }

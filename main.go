@@ -38,6 +38,11 @@ func main() {
 	pokeId := flag.Int("id", 151, "Pokemon Id to add to the database (-addpokemon)")
 	lat := flag.Float64("lat", 34.008096, "Latitude for pokemon (-addpokemon)")
 	lng := flag.Float64("lng", -118.497933, "Latitude for pokemon (-addpokemon)")
+	addApiKey := flag.String("addkey", "", "Adds an Api key to the database")
+	enableApiKey := flag.String("enablekey", "", "Enables an Api key")
+	disableApiKey := flag.String("disablekey", "", "Disables an Api key")
+	verifyApiKey := flag.String("verifykey", "", "Verifies an Api key")
+	unverifyApiKey := flag.String("unverifykey", "", "Unverifies an Api key")
 	// Parse flags
 	flag.Parse()
 	// Do something
@@ -46,6 +51,75 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	// Api key stuff
+	// Add
+	if *addApiKey != "" {
+		err := database.AddApiKey(opm.ApiKey{Key: *addApiKey})
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("Key %s added\n", *addApiKey)
+		}
+	}
+	// Enable
+	if *enableApiKey != "" {
+		key, err := database.GetApiKey(*enableApiKey)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if !key.Enabled {
+				key.Enabled = true
+				database.UpdateApiKey(key)
+			} else {
+				fmt.Println("Key already enabled")
+			}
+		}
+	}
+
+	// Disable
+	if *disableApiKey != "" {
+		key, err := database.GetApiKey(*disableApiKey)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if key.Enabled {
+				key.Enabled = false
+				database.UpdateApiKey(key)
+			} else {
+				fmt.Println("Key already disabled")
+			}
+		}
+	}
+	// Verify
+	if *verifyApiKey != "" {
+		key, err := database.GetApiKey(*verifyApiKey)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if !key.Verified {
+				key.Verified = true
+				database.UpdateApiKey(key)
+			} else {
+				fmt.Println("Key already verified")
+			}
+		}
+	}
+	// Unverify
+	if *unverifyApiKey != "" {
+		key, err := database.GetApiKey(*unverifyApiKey)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if key.Verified {
+				key.Verified = false
+				database.UpdateApiKey(key)
+			} else {
+				fmt.Println("Key not verified")
+			}
+		}
+	}
+
 	// Status
 	if *status {
 		// Scanner status
