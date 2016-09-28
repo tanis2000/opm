@@ -46,10 +46,13 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	// Read from file
-	b, err := ioutil.ReadFile("config.json")
+	// Load settings
+	b, err := ioutil.ReadFile("/etc/opm/proxy.json")
 	if err != nil {
-		log.Fatal(err)
+		b, err = ioutil.ReadFile("config.json")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	// Unmarshal json
 	var settings Settings
