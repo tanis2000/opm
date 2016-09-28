@@ -46,38 +46,44 @@ func main() {
 	// stuff
 	stats = &Stats{}
 	expvar.Publish("opm_stats", stats)
-	go asdf()
+	go runStats()
 	http.ListenAndServe(":8324", nil)
 }
 
-func asdf() {
+func runStats() {
 	database, err := db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
-	pollRate := time.Second
+	pollRate := 30 * time.Second
 	for {
+		// Accounts
 		accountsTotal, accountsUse, accountsBanned, err := database.AccountStats()
 		if err != nil {
 			log.Println(err)
 		}
+		stats.AccountsTotal = accountsTotal
+		stats.AccountsBanned = accountsBanned
+		stats.AccountsInUse = accountsUse
+		// Sleep
+		time.Sleep(pollRate / 3)
+		// Proxies
 		proxiesAlive, proxiesUse, err := database.ProxyStats()
 		if err != nil {
 			log.Println(err)
 		}
-		pokemonTotal, pokemonAlive, gyms, pokestops := database.MapObjectStats()
-
-		stats.AccountsTotal = accountsTotal
-		stats.AccountsBanned = accountsBanned
-		stats.AccountsInUse = accountsUse
 		stats.ProxiesInUse = proxiesUse
 		stats.ProxiesAlive = proxiesAlive
+		// Sleep
+		time.Sleep(pollRate / 3)
+		// MapObjects
+		pokemonTotal, pokemonAlive, gyms, pokestops := database.MapObjectStats()
 		stats.PokemonTotal = pokemonTotal
 		stats.PokemonAlive = pokemonAlive
 		stats.Gyms = gyms
 		stats.Pokestops = pokestops
-
-		time.Sleep(pollRate)
+		// Sleep
+		time.Sleep(pollRate / 3)
 	}
 
 }
