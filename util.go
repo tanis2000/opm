@@ -240,7 +240,7 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		// ACAH headers
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			if strings.Contains(origin, settings.AllowOrigin) {
+			if strings.HasSuffix(origin, settings.AllowOrigin) {
 				w.Header().Add("Access-Control-Allow-Origin", origin)
 			}
 		}
