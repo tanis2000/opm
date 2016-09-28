@@ -60,20 +60,26 @@ func main() {
 		}
 	}
 	// Queue up all the trainer logins
-	go func(treners []*util.TrainerSession) {
+	go func(trainers []*util.TrainerSession) {
 		count := 0
-		for _, t := range treners {
+		for _, t := range trainers {
 			if !t.IsLoggedIn() {
 				<-loginTicks
 				log.Printf("Logging in %s", t.Account.Username)
 				t.Context, _ = context.WithTimeout(context.Background(), 10*time.Second)
 				err := t.Login()
+				if err == api.ErrProxyDead {
+					p, err := database.GetProxy()
+					if err != nil {
+						t.SetProxy(p)
+					}
+				}
 				if err != nil {
 					log.Println(err)
 				}
 			} else {
 				count++
-				if count >= len(treners) {
+				if count >= len(trainers) {
 					break
 				}
 			}
