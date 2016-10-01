@@ -35,7 +35,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	case "pgm":
 		var pgmMessage PGMWebhookFormat
 		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
-		if err != nil {
+		if err != nil || pgmMessage.Type != "pokemon" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
