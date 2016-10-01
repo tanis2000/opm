@@ -36,6 +36,7 @@ type object struct {
 	Expiry       int64
 	Lured        bool
 	Team         int
+	Source       string
 }
 
 // NewOpenMapDb creates a new connection to
@@ -220,6 +221,7 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 		},
 		Expiry: m.Expiry,
 		Team:   m.Team,
+		Source: m.Source,
 	}
 	if o.Type != opm.POKEMON {
 		db.mongoSession.DB(db.DbName).C("Objects").Upsert(bson.M{"id": o.Id}, o)
