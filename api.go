@@ -9,16 +9,16 @@ import (
 )
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
-	// Process request
-	var submission opm.ApiSubmission
-	err := json.NewDecoder(r.Body).Decode(&submission)
-	if err != nil {
+	// Get key and format
+	keyString := r.FormValue("key")
+	format := r.FormValue("format")
+	if keyString == "" || format == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, err)
 		return
 	}
+
 	// Check API key
-	key, err := database.GetApiKey(submission.Key)
+	key, err := database.GetApiKey(keyString)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, err)
@@ -29,15 +29,25 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Key disabled")
 		return
 	}
-	// Add source information
-	objects := make([]opm.MapObject, len(submission.MapObjects))
-	for i, m := range submission.MapObjects {
-		m.Source = key.Key
-		objects[i] = m
-
+	// Process request
+	var object opm.MapObject
+	switch format {
+	case "pgm":
+		var pgmMessage PGMWebhookFormat
+		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		object = pgmMessage.MapObject()
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+	// Add source information
+	object.Source = keyString
 	// Add to database
-	database.AddMapObjects(objects)
+	database.AddMapObject(object)
 	// Write response
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, "<3")
