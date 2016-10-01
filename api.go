@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/femot/openmap-tools/opm"
@@ -47,6 +48,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	// Add source information
 	object.Source = keyString
 	// Add to database
+	log.Printf("Adding Pokemon %d from %s\n", object.PokemonId, object.Source)
 	database.AddMapObject(object)
 	// Write response
 	w.WriteHeader(http.StatusOK)
