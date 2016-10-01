@@ -9,6 +9,8 @@ import (
 	"github.com/femot/openmap-tools/opm"
 )
 
+var abuseCounter = make(map[string]int)
+
 func submitHandler(w http.ResponseWriter, r *http.Request) {
 	// Get key and format
 	keyString := r.FormValue("key")
@@ -36,9 +38,17 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	case "pgm":
 		var pgmMessage PGMWebhookFormat
 		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
-		if err != nil || pgmMessage.Type != "pokemon" {
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
+		}
+		if pgmMessage.Type != "pokemon" {
+			abuseCounter[keyString]++
+			if abuseCounter[keyString] > 100 {
+				key.Enabled = false
+				database.UpdateApiKey(key)
+				log.Printf("Disabled key %s for spamming pokestops/gyms", key.Key)
+			}
 		}
 		object = pgmMessage.MapObject()
 	default:
