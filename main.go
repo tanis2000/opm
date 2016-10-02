@@ -1,6 +1,7 @@
 package main
 
 import (
+	"expvar"
 	"log"
 	"net/http"
 	"time"
@@ -9,29 +10,33 @@ import (
 )
 
 var database *db.OpenMapDb
-var settings Settings
+var apiSettings settings
+var metrics APIMetrics
 
 func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	// Settings
 	var err error
-	settings, err = loadSettings()
+	apiSettings, err = loadSettings()
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Db connections
-	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
+	database, err = db.NewOpenMapDb(apiSettings.DbName, apiSettings.DbHost, apiSettings.DbUser, apiSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Expvar
+	expvar.Publish("metrics", metrics)
 	// Routes/Handlers
 	mux := http.NewServeMux()
 	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))
+	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		Addr:         settings.ListenAddr,
+		Addr:         apiSettings.ListenAddr,
 		Handler:      mux,
 	}
 	// Run server

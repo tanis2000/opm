@@ -6,9 +6,45 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/femot/openmap-tools/opm"
+	"github.com/paulbellamy/ratecounter"
 )
 
-type Settings struct {
+// APIMetrics stores metrics for API keys
+type APIMetrics map[string]APIKeyMetrics
+
+func (m APIMetrics) String() string {
+	var metricList []APIKeyMetricsRaw
+	for _, v := range m {
+		metricList = append(metricList, v.Eval())
+	}
+	b, _ := json.Marshal(metricList)
+	return string(b)
+}
+
+// APIKeyMetrics stores metrics about individual API keys
+type APIKeyMetrics struct {
+	Key            opm.ApiKey
+	InvalidCounter *ratecounter.RateCounter
+	PokemonCounter *ratecounter.RateCounter
+}
+
+type APIKeyMetricsRaw struct {
+	Key              string
+	InvalidPerMinute int64
+	PokemonPerMinute int64
+}
+
+func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
+	return APIKeyMetricsRaw{
+		Key:              m.Key.Name,
+		InvalidPerMinute: m.InvalidCounter.Rate(),
+		PokemonPerMinute: m.PokemonCounter.Rate(),
+	}
+}
+
+type settings struct {
 	ListenAddr string // Listen address for http
 	DbName     string // Name of the db
 	DbHost     string // Host of the db
@@ -16,23 +52,23 @@ type Settings struct {
 	DbPassword string
 }
 
-func loadSettings() (Settings, error) {
+func loadSettings() (settings, error) {
 	// Try to find system settings file
 	bytes, err := ioutil.ReadFile("/etc/opm/api.json")
 	if err != nil {
 		// Use local config
 		bytes, err = ioutil.ReadFile("config.json")
 		if err != nil {
-			return Settings{}, err
+			return settings{}, err
 		}
 	}
 	// Unmarshal json
-	var settings Settings
-	err = json.Unmarshal(bytes, &settings)
+	var s settings
+	err = json.Unmarshal(bytes, &s)
 	if err != nil {
-		return settings, err
+		return s, err
 	}
-	return settings, err
+	return s, err
 }
 
 func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

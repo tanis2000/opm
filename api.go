@@ -40,25 +40,25 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			metrics[key.Key].InvalidCounter.Incr(1)
 			return
 		}
 		if pgmMessage.Type != "pokemon" {
-			abuseCounter[keyString]++
-			if abuseCounter[keyString] > 100 {
-				key.Enabled = false
-				database.UpdateApiKey(key)
-				log.Printf("Disabled key %s for spamming pokestops/gyms", key.Key)
-			}
+			metrics[key.Key].InvalidCounter.Incr(1)
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		object = pgmMessage.MapObject()
 	default:
 		w.WriteHeader(http.StatusBadRequest)
+		metrics[key.Key].InvalidCounter.Incr(1)
 		return
 	}
+	metrics[key.Key].PokemonCounter.Incr(1)
 	// Add source information
 	object.Source = keyString
 	// Add to database
-	log.Printf("Adding Pokemon %d from %s\n", object.PokemonId, object.Source)
+	log.Printf("Adding Pokemon %d from %s\n", object.PokemonId, key.Name)
 	database.AddMapObject(object)
 	// Write response
 	w.WriteHeader(http.StatusOK)
