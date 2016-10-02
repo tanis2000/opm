@@ -27,6 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// Expvar
+	metrics = make(map[string]APIKeyMetrics)
 	expvar.Publish("metrics", metrics)
 	// Routes/Handlers
 	mux := http.NewServeMux()
