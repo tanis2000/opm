@@ -68,6 +68,8 @@ type StatusEntry struct {
 
 type ApiKey struct {
 	Key      string
+	Name     string
+	URL      string
 	Verified bool
 	Enabled  bool
 }
