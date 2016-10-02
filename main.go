@@ -28,7 +28,7 @@ func main() {
 	}
 	// Expvar
 	keyMetrics = make(map[string]APIKeyMetrics)
-	expvar.Publish("keys", keyMetrics)
+	expvar.Publish("metrics", keyMetrics)
 	// Routes/Handlers
 	mux := http.NewServeMux()
 	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))
