@@ -26,11 +26,6 @@ type ApiResponse struct {
 	MapObjects []MapObject
 }
 
-type ApiSubmission struct {
-	Key        string
-	MapObjects []MapObject
-}
-
 type MapObject struct {
 	Type         int     `json:"type"`
 	PokemonId    int     `json:"pokemonId,omitempty"`
