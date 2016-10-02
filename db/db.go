@@ -457,7 +457,7 @@ func (db *OpenMapDb) ApiKeyStats() map[string]int {
 	result := make(map[string]int)
 	// Get API keys
 	var keys []opm.ApiKey
-	err := db.mongoSession.DB(db.DbName).C("Keys").Find(nil).All(keys)
+	err := db.mongoSession.DB(db.DbName).C("Keys").Find(nil).All(&keys)
 	if err != nil {
 		return result
 	}
