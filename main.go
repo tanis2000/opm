@@ -66,7 +66,7 @@ func main() {
 			lines = append(lines, fmt.Sprintf("%10s %13d", k, v))
 		}
 
-		fmt.Printf("%10s Pokemon alive", "Contributor\n")
+		fmt.Printf("%10s Pokemon alive\n", "Contributor")
 		for _, l := range lines {
 			fmt.Println(l)
 		}
