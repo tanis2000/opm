@@ -56,7 +56,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		object = pgmMessage.MapObject()
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		keyMetrics[key.Key].InvalidCounter.Incr(1)
+		keyMetrics[key.Key].ExpiredCounter.Incr(1)
 		return
 	}
 	keyMetrics[key.Key].PokemonCounter.Incr(1)

@@ -17,6 +17,7 @@ type APIMetrics map[string]APIKeyMetrics
 type metrics struct {
 	PokemonPerMinute int64
 	InvalidPerMinute int64
+	ExpiredPerMinute int64
 	Stats            []APIKeyMetricsRaw
 }
 
@@ -27,6 +28,7 @@ func (m APIMetrics) String() string {
 		metricList = append(metricList, v.Eval())
 		metrics.InvalidPerMinute += v.InvalidCounter.Rate()
 		metrics.PokemonPerMinute += v.PokemonCounter.Rate()
+		metrics.ExpiredPerMinute += v.ExpiredCounter.Rate()
 	}
 	metrics.Stats = metricList
 	b, _ := json.Marshal(metrics)
@@ -38,6 +40,7 @@ type APIKeyMetrics struct {
 	Key            opm.ApiKey
 	InvalidCounter *ratecounter.RateCounter
 	PokemonCounter *ratecounter.RateCounter
+	ExpiredCounter *ratecounter.RateCounter
 }
 
 func newAPIKeyMetrics(key opm.ApiKey) APIKeyMetrics {
@@ -45,6 +48,7 @@ func newAPIKeyMetrics(key opm.ApiKey) APIKeyMetrics {
 		Key:            key,
 		InvalidCounter: ratecounter.NewRateCounter(time.Minute),
 		PokemonCounter: ratecounter.NewRateCounter(time.Minute),
+		ExpiredCounter: ratecounter.NewRateCounter(time.Minute),
 	}
 }
 
