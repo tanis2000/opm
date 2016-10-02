@@ -56,6 +56,7 @@ type APIKeyMetricsRaw struct {
 	Key              string
 	InvalidPerMinute int64
 	PokemonPerMinute int64
+	ExpiredPerMinute int64
 }
 
 func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
@@ -63,6 +64,7 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 		Key:              m.Key.Name,
 		InvalidPerMinute: m.InvalidCounter.Rate(),
 		PokemonPerMinute: m.PokemonCounter.Rate(),
+		ExpiredPerMinute: m.ExpiredCounter.Rate(),
 	}
 }
 
