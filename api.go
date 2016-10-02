@@ -33,8 +33,8 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Metrics
-	if _, ok := metrics[key.Key]; !ok {
-		metrics[key.Key] = newAPIKeyMetrics(key)
+	if _, ok := keyMetrics[key.Key]; !ok {
+		keyMetrics[key.Key] = newAPIKeyMetrics(key)
 	}
 	// Process request
 	var object opm.MapObject
@@ -44,21 +44,21 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			metrics[key.Key].InvalidCounter.Incr(1)
+			keyMetrics[key.Key].InvalidCounter.Incr(1)
 			return
 		}
 		if pgmMessage.Type != "pokemon" {
-			metrics[key.Key].InvalidCounter.Incr(1)
+			keyMetrics[key.Key].InvalidCounter.Incr(1)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		object = pgmMessage.MapObject()
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		metrics[key.Key].InvalidCounter.Incr(1)
+		keyMetrics[key.Key].InvalidCounter.Incr(1)
 		return
 	}
-	metrics[key.Key].PokemonCounter.Incr(1)
+	keyMetrics[key.Key].PokemonCounter.Incr(1)
 	// Add source information
 	object.Source = keyString
 	// Add to database

@@ -11,7 +11,7 @@ import (
 
 var database *db.OpenMapDb
 var apiSettings settings
-var metrics APIMetrics
+var keyMetrics APIMetrics
 
 func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
@@ -27,8 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 	// Expvar
-	metrics = make(map[string]APIKeyMetrics)
-	expvar.Publish("metrics", metrics)
+	keyMetrics = make(map[string]APIKeyMetrics)
+	expvar.Publish("keys", keyMetrics)
 	// Routes/Handlers
 	mux := http.NewServeMux()
 	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))

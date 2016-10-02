@@ -14,12 +14,22 @@ import (
 // APIMetrics stores metrics for API keys
 type APIMetrics map[string]APIKeyMetrics
 
+type metrics struct {
+	PokemonPerMinute int64
+	InvalidPerMinute int64
+	Stats            []APIKeyMetricsRaw
+}
+
 func (m APIMetrics) String() string {
 	var metricList []APIKeyMetricsRaw
+	metrics := metrics{}
 	for _, v := range m {
 		metricList = append(metricList, v.Eval())
+		metrics.InvalidPerMinute += v.InvalidCounter.Rate()
+		metrics.PokemonPerMinute += v.PokemonCounter.Rate()
 	}
-	b, _ := json.Marshal(metricList)
+	metrics.Stats = metricList
+	b, _ := json.Marshal(metrics)
 	return string(b)
 }
 
