@@ -452,3 +452,20 @@ func (db *OpenMapDb) GetApiKey(k string) (opm.ApiKey, error) {
 func (db *OpenMapDb) UpdateApiKey(k opm.ApiKey) error {
 	return db.mongoSession.DB(db.DbName).C("Keys").Update(bson.M{"key": k.Key}, k)
 }
+
+func (db *OpenMapDb) ApiKeyStats() map[string]int {
+	result := make(map[string]int)
+	// Get API keys
+	var keys []opm.ApiKey
+	err := db.mongoSession.DB(db.DbName).C("Keys").Find(nil).All(keys)
+	if err != nil {
+		return result
+	}
+	// Get alive pokemon for all of them
+	for _, k := range keys {
+		count, _ := db.mongoSession.DB(db.DbName).C("Objects").Find(bson.M{"source": k.Key, "expiry": bson.M{"$gt": time.Now().Unix()}}).Count()
+		result[k.Name] = count
+	}
+	// Return result
+	return result
+}
