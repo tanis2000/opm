@@ -47,6 +47,7 @@ func main() {
 	unverifyKey := flag.Bool("unverifykey", false, "Unverifies an Api key")
 	setName := flag.String("setname", "", "Sets the name for an API key")
 	setURL := flag.String("seturl", "", "Sets the URL for an API key")
+	keyStats := flag.Bool("keystats", false, "Shows stats for API keys")
 	// Parse flags
 	flag.Parse()
 	// Do something
@@ -57,6 +58,19 @@ func main() {
 	}
 
 	// Api key stuff
+	// stats
+	if *keyStats {
+		stats := database.ApiKeyStats()
+		var lines []string
+		for k, v := range stats {
+			lines = append(lines, fmt.Sprintf("%10s %13d", k, v))
+		}
+
+		fmt.Printf("%10s Pokemon alive", "Contributor\n")
+		for _, l := range lines {
+			fmt.Println(l)
+		}
+	}
 	// Add
 	if *addKey != "" {
 		err := database.AddApiKey(opm.ApiKey{Key: *addKey})
