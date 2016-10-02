@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/femot/openmap-tools/opm"
 )
@@ -62,6 +63,12 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	// Add source information
 	object.Source = keyString
 	// Add to database
+	if object.Expiry < time.Now().Unix() {
+		log.Printf("%s tried to add expired Pokemon. Ignoring..")
+		keyMetrics[key.Key].InvalidCounter.Incr(1)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonId, key.Name, object.Lat, object.Lng)
 	database.AddMapObject(object)
 	// Write response
