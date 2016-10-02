@@ -59,7 +59,6 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		keyMetrics[key.Key].InvalidCounter.Incr(1)
 		return
 	}
-	keyMetrics[key.Key].PokemonCounter.Incr(1)
 	// Add source information
 	object.Source = keyString
 	// Add to database
@@ -69,6 +68,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	keyMetrics[key.Key].PokemonCounter.Incr(1)
 	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonId, key.Name, object.Lat, object.Lng)
 	database.AddMapObject(object)
 	// Write response
