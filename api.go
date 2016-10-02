@@ -64,7 +64,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	object.Source = keyString
 	// Add to database
 	if object.Expiry < time.Now().Unix() {
-		log.Printf("%s tried to add expired Pokemon. Ignoring..")
+		log.Printf("%s tried to add expired Pokemon. Ignoring..", key.Name)
 		keyMetrics[key.Key].InvalidCounter.Incr(1)
 		w.WriteHeader(http.StatusBadRequest)
 		return
