@@ -62,7 +62,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	// Add source information
 	object.Source = keyString
 	// Add to database
-	log.Printf("Adding Pokemon %d from %s\n", object.PokemonId, key.Name)
+	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonId, key.Name, object.Lat, object.Lng)
 	database.AddMapObject(object)
 	// Write response
 	w.WriteHeader(http.StatusOK)
