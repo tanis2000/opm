@@ -30,6 +30,14 @@ type APIKeyMetrics struct {
 	PokemonCounter *ratecounter.RateCounter
 }
 
+func newAPIKeyMetrics(key opm.ApiKey) APIKeyMetrics {
+	return APIKeyMetrics{
+		Key:            key,
+		InvalidCounter: ratecounter.NewRateCounter(time.Minute),
+		PokemonCounter: ratecounter.NewRateCounter(time.Minute),
+	}
+}
+
 type APIKeyMetricsRaw struct {
 	Key              string
 	InvalidPerMinute int64

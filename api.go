@@ -32,6 +32,10 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Key disabled")
 		return
 	}
+	// Metrics
+	if _, ok := metrics[key.Key]; !ok {
+		metrics[key.Key] = newAPIKeyMetrics(key)
+	}
 	// Process request
 	var object opm.MapObject
 	switch format {
