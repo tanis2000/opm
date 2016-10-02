@@ -53,6 +53,7 @@ func main() {
 		log.Fatal(err)
 	}
 	go runStats()
+	go runObjects()
 	http.ListenAndServe(":8324", nil)
 }
 
