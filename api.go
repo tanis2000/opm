@@ -20,6 +20,8 @@ import (
 var ErrBusy = errors.New("All our minions are busy")
 var ErrTimeout = errors.New("Scan timed out")
 
+var f = func(r *http.Request) bool { return true }
+
 const REQUEST_TIMEOUT = 15
 
 func listenAndServe() {
@@ -85,6 +87,11 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
+	if !f(r) {
+		writeScanResponse(w, false, "Failed", nil)
+		return
+	}
+
 	// Create a context
 	ctx, cancel := context.WithTimeout(context.Background(), REQUEST_TIMEOUT*time.Second)
 	defer cancel()
