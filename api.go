@@ -87,6 +87,11 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
+	// Check f
+	if !f(r) {
+		writeScanResponse(w, false, "Failed", nil)
+		return
+	}
 	// Create a context
 	ctx, cancel := context.WithTimeout(context.Background(), REQUEST_TIMEOUT*time.Second)
 	defer cancel()
@@ -104,11 +109,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
 	if err != nil {
 		writeScanResponse(w, false, err.Error(), nil)
-		return
-	}
-	// Check f
-	if !f(r) {
-		writeScanResponse(w, false, "Failed", nil)
 		return
 	}
 	// Get trainer from queue
