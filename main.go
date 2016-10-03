@@ -11,7 +11,8 @@ import (
 
 var database *db.OpenMapDb
 var apiSettings settings
-var keyMetrics APIMetrics
+var keyMetrics KeyMetrics
+var apiMetrics APIMetrics
 
 func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
@@ -31,12 +32,18 @@ func main() {
 	expvar.Publish("metrics", keyMetrics)
 	// Routes/Handlers
 	mux := http.NewServeMux()
+	scanHandler, err := createScanProxy()
+	if err != nil {
+		log.Fatal(err)
+	}
+	mux.Handle("/scan", scanHandler)
+	mux.HandleFunc("/cache", handleFuncDecorator(cacheHandler))
 	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 		Addr:         apiSettings.ListenAddr,
 		Handler:      mux,
 	}

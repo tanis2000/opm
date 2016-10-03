@@ -11,8 +11,73 @@ import (
 	"github.com/paulbellamy/ratecounter"
 )
 
+type RingBuffer struct {
+	buffer []int64
+	cap    int
+	c      chan int64
+}
+
+func (r *RingBuffer) Add(value int64) {
+	r.c <- value
+}
+
+func (r *RingBuffer) Buffer() []int64 {
+	output := make([]int64, len(r.buffer))
+	copy(output, r.buffer)
+	return output
+}
+
+func (r *RingBuffer) String() string {
+	data, _ := json.Marshal(r.buffer)
+	return string(data)
+}
+
+func NewBuffer(cap int) *RingBuffer {
+	b := &RingBuffer{
+		buffer: make([]int64, 0),
+		c:      make(chan int64),
+		cap:    cap,
+	}
+	// Goroutine for handling Add()
+	go func(rb *RingBuffer) {
+		for {
+			v := <-rb.c
+			rb.buffer = append(rb.buffer, v)
+			if len(rb.buffer) >= rb.cap {
+				break
+			}
+		}
+		i := 0
+		for {
+			v := <-rb.c
+			rb.buffer[i] = v
+			i++
+			if i >= len(rb.buffer) {
+				i = 0
+			}
+		}
+	}(b)
+	// Return buffer
+	return b
+}
+
 // APIMetrics stores metrics for API keys
-type APIMetrics map[string]APIKeyMetrics
+type KeyMetrics map[string]APIKeyMetrics
+
+type APIMetrics struct {
+	KeyMetrics KeyMetrics
+	// Requests
+	BlockedRequestsPerMinute *ratecounter.RateCounter
+	// Scans
+	ScansPerMinute      *ratecounter.RateCounter
+	ScanFailsPerMinute  *ratecounter.RateCounter
+	ScanBusyPerMinute   *ratecounter.RateCounter
+	ScanResponseTimesMs *RingBuffer
+	// Cache
+	CacheRequestsPerMinute     *ratecounter.RateCounter
+	CacheRequestFailsPerMinute *ratecounter.RateCounter
+	CacheResponseTimesNs       *RingBuffer
+}
 
 type metrics struct {
 	PokemonPerMinute int64
@@ -21,7 +86,7 @@ type metrics struct {
 	Stats            []APIKeyMetricsRaw
 }
 
-func (m APIMetrics) String() string {
+func (m KeyMetrics) String() string {
 	var metricList []APIKeyMetricsRaw
 	metrics := metrics{}
 	for _, v := range m {
@@ -69,11 +134,13 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 }
 
 type settings struct {
-	ListenAddr string // Listen address for http
-	DbName     string // Name of the db
-	DbHost     string // Host of the db
-	DbUser     string
-	DbPassword string
+	ListenAddr  string // Listen address for http
+	DbName      string // Name of the db
+	DbHost      string // Host of the db
+	DbUser      string // User for db authentication
+	DbPassword  string // Password for db authentication
+	CacheRadius int    // Cache radius
+	ScannerAddr string // Address of the scanner
 }
 
 func loadSettings() (settings, error) {
