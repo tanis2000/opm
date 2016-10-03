@@ -36,8 +36,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.Handle("/scan", scanHandler)
-	mux.HandleFunc("/cache", handleFuncDecorator(cacheHandler))
+	mux.Handle("/q", scanHandler)
+	mux.HandleFunc("/c", handleFuncDecorator(cacheHandler))
 	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts
