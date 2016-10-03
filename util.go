@@ -231,6 +231,8 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		if r.Header.Get("CF-Connecting-IP") != "" {
 			remoteAddr = r.Header.Get("CF-Connecting-IP")
 		}
+		lat := r.FormValue("lat")
+		lng := r.FormValue("lng")
 		// Check blacklist
 		if blacklist[remoteAddr] {
 			w.WriteHeader(http.StatusForbidden)
@@ -259,7 +261,7 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		if r.Method != "POST" {
 			log.Printf("%-6s %-5s\t%-22s\t%s", r.Method, r.URL.Path, remoteAddr, dt)
 		} else {
-			log.Printf("%-6s %-5s %-20s,%-20s\t%-20s\t%s", r.Method, r.URL.Path, r.FormValue("lat"), r.FormValue("lng"), dt, remoteAddr)
+			log.Printf("%-6s %-5s %-20s,%-20s\t%-20s\t%s", r.Method, r.URL.Path, lat, lng, dt, remoteAddr)
 		}
 	}
 }
