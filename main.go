@@ -24,7 +24,8 @@ func main() {
 	dbUser := ""
 	dbPassword := ""
 	// Databse connections
-	database, err := db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
+	var err error
+	database, err = db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
