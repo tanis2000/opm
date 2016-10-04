@@ -23,6 +23,9 @@ func main() {
 	dbHost := "localhost"
 	dbUser := ""
 	dbPassword := ""
+	proxyHost := "http://localhost:8081"
+
+	api.ProxyHost = proxyHost
 	// Databse connections
 	var err error
 	database, err = db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
