@@ -68,7 +68,7 @@ func checkAccount(account opm.Account) {
 	// Login
 	err = trainer.Login()
 	count := 0
-	for err != nil {
+	for err != nil && err != api.ErrNewRPCURL {
 		log.Println(err)
 		if count > 5 {
 			log.Println("Cant login")
