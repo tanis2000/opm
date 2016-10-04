@@ -41,6 +41,7 @@ func main() {
 		}
 		// Check accounts
 		for _, a := range accounts {
+			log.Printf("Checking <%s> now\n", a.Username)
 			checkAccount(a)
 			time.Sleep(30 * time.Second)
 		}
