@@ -320,7 +320,7 @@ func (db *OpenMapDb) AccountStats() (int, int, int, error) {
 // GetBannedAccounts returns all accounts that are flagged as banned from the db
 func (db *OpenMapDb) GetBannedAccounts() ([]opm.Account, error) {
 	var accounts []opm.Account
-	err := db.mongoSession.DB(db.DbName).C("Accounts").Find(bson.M{"banned": true}).One(&accounts)
+	err := db.mongoSession.DB(db.DbName).C("Accounts").Find(bson.M{"banned": true}).All(&accounts)
 	return accounts, err
 }
 
