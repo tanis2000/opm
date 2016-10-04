@@ -16,6 +16,8 @@ var feed api.Feed
 var crypto api.Crypto
 
 func main() {
+	// Log
+	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	// Settings
 	dbName := "OpenPogoMap"
 	dbHost := "localhost"
