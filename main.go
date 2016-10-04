@@ -42,6 +42,7 @@ func main() {
 		// Check accounts
 		for _, a := range accounts {
 			checkAccount(a)
+			time.Sleep(30 * time.Second)
 		}
 		// Wait before next round
 		time.Sleep(30 * time.Second)
