@@ -70,6 +70,10 @@ func (db *OpenMapDb) ensureIndex() error {
 	if err != nil {
 		return err
 	}
+	err = db.mongoSession.DB("OpenPogoMap").C("Keys").EnsureIndex(mgo.Index{Key: []string{"key"}, Unique: true, DropDups: true})
+	if err != nil {
+		return err
+	}
 	return db.mongoSession.DB(db.DbName).C("Proxy").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
 }
 

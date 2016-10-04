@@ -48,6 +48,7 @@ func main() {
 	setName := flag.String("setname", "", "Sets the name for an API key")
 	setURL := flag.String("seturl", "", "Sets the URL for an API key")
 	keyStats := flag.Bool("keystats", false, "Shows stats for API keys")
+	genKey := flag.Bool("genkey", false, "Generate a new API Key")
 	// Parse flags
 	flag.Parse()
 	// Do something
@@ -58,6 +59,32 @@ func main() {
 	}
 
 	// Api key stuff
+	// Generate Key
+	if *genKey {
+		var name string
+		var URL string
+		// Get data
+		fmt.Print("Enter name: ")
+		fmt.Scanln(&name)
+		fmt.Print("Enter URL: ")
+		fmt.Scanln(&URL)
+
+		rawKey := generateRandomKey()
+		key := opm.ApiKey{
+			Key:      rawKey,
+			Name:     name,
+			URL:      URL,
+			Enabled:  true,
+			Verified: false,
+		}
+
+		err := database.AddApiKey(key)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!", key.Key)
+		}
+	}
 	// stats
 	if *keyStats {
 		stats := database.ApiKeyStats()
@@ -276,6 +303,7 @@ func main() {
 	// UFS
 	if *ufs {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?secret=%s", *statusPage, *secret), nil)
+		req.Header.Add("ETag", "1234")
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Println(err)
@@ -296,4 +324,15 @@ func main() {
 		fmt.Printf("Updated %d database entries\n", count)
 	}
 
+}
+
+func generateRandomKey() string {
+	rand.Seed(time.Now().UnixNano())
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	key := string(b)
+	return key
 }
