@@ -85,7 +85,7 @@ func checkAccount(account opm.Account) {
 	trainer.MoveTo(&api.Location{Lat: lat, Lon: lng})
 	// Perform API call
 	_, err = trainer.GetPlayerMap()
-	if err != nil {
+	if err != nil && err != api.ErrNewRPCURL {
 		if err == api.ErrBadRequest {
 			log.Printf("Account <%s> banned for sure! (StatusCode 3)", account.Username)
 		} else {
