@@ -52,17 +52,17 @@ func main() {
 
 func checkAccount(account opm.Account) {
 	// Create session
-	s := util.NewTrainerSession(account, &api.Location{}, feed, crypto)
+	trainer := util.NewTrainerSession(account, &api.Location{}, feed, crypto)
 	// Get a proxy
-	p, err := database.GetProxy()
+	proxy, err := database.GetProxy()
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer database.ReturnProxy(p)
-	s.SetProxy(p)
+	defer database.ReturnProxy(proxy)
+	trainer.SetProxy(proxy)
 	// Login
-	err = s.Login()
+	err = trainer.Login()
 	count := 0
 	for err != nil {
 		log.Println(err)
@@ -71,16 +71,16 @@ func checkAccount(account opm.Account) {
 			break
 		}
 		time.Sleep(10 * time.Second)
-		err = s.Login()
+		err = trainer.Login()
 		count++
 	}
 	// Santa Monica Pier
 	lat := 34.0075
 	lng := -118.499795
 	// Move there
-	s.MoveTo(&api.Location{Lat: lat, Lon: lng})
+	trainer.MoveTo(&api.Location{Lat: lat, Lon: lng})
 	// Perform API call
-	_, err = s.GetPlayerMap()
+	_, err = trainer.GetPlayerMap()
 	if err != nil {
 		if err == api.ErrBadRequest {
 			log.Printf("Account <%s> banned for sure! (StatusCode 3)", account.Username)
