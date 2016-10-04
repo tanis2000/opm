@@ -82,7 +82,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!", key.Key)
+			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!\n", key.Key)
 		}
 	}
 	// stats
