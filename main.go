@@ -53,8 +53,16 @@ func main() {
 func checkAccount(account opm.Account) {
 	// Create session
 	s := util.NewTrainerSession(account, &api.Location{}, feed, crypto)
+	// Get a proxy
+	p, err := database.GetProxy()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer database.ReturnProxy(p)
+	s.SetProxy(p)
 	// Login
-	err := s.Login()
+	err = s.Login()
 	count := 0
 	for err != nil {
 		log.Println(err)
