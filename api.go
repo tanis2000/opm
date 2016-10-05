@@ -75,13 +75,19 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Add source information
 	object.Source = keyString
-	// Add to database
+	// Time validation
 	if object.Expiry < time.Now().Unix() {
 		log.Printf("%s tried to add expired Pokemon. Ignoring..", key.Name)
 		keyMetrics[key.Key].ExpiredCounter.Incr(1)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if object.Expiry > time.Now().Add(15*time.Minute).Unix() {
+		log.Printf("%s tried to add Pokemon with a TTL of more than 15 minutes. Ignoring..", key.Name)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// Add to database
 	keyMetrics[key.Key].PokemonCounter.Incr(1)
 	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonId, key.Name, object.Lat, object.Lng)
 	database.AddMapObject(object)
