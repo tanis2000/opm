@@ -20,7 +20,7 @@ import (
 var ErrBusy = errors.New("All our minions are busy")
 var ErrTimeout = errors.New("Scan timed out")
 
-var f = func(r *http.Request) bool { return true }
+var checkRequest = func(r *http.Request) bool { return true }
 
 const REQUEST_TIMEOUT = 15
 
@@ -88,7 +88,7 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Check f
-	if !f(r) {
+	if !checkRequest(r) {
 		writeScanResponse(w, false, "Failed", nil)
 		return
 	}
@@ -277,6 +277,9 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 		// Pokemon
 		for _, p := range c.WildPokemons {
 			expiry := time.Now().Add(time.Duration(p.TimeTillHiddenMs) * time.Millisecond).Unix()
+			if expiry > time.Now().Add(15*time.Minute).Unix() {
+				continue
+			}
 			objects = append(objects, opm.MapObject{
 				Type:         opm.POKEMON,
 				Id:           strconv.FormatUint(p.EncounterId, 36),
