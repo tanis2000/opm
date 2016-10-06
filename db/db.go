@@ -337,7 +337,7 @@ func (db *OpenMapDb) GetBannedAccounts() ([]opm.Account, error) {
 func (db *OpenMapDb) GetAccount() (opm.Account, error) {
 	// Get account from db
 	var a opm.Account
-	err := db.mongoSession.DB(db.DbName).C("Accounts").Find(bson.M{"used": false, "banned": false}).One(&a)
+	err := db.mongoSession.DB(db.DbName).C("Accounts").Find(bson.M{"used": false, "banned": false, "captchaFlagged": false}).One(&a)
 	if err != nil {
 		return opm.Account{}, err
 	}
