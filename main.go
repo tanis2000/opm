@@ -22,9 +22,10 @@ var database *db.OpenMapDb
 
 type Stats struct {
 	// Accounts
-	AccountsInUse  int `json:"accounts_in_use"`
-	AccountsBanned int `json:"accounts_banned"`
-	AccountsTotal  int `json:"accounts_total"`
+	AccountsInUse      int `json:"accounts_in_use"`
+	AccountsBanned     int `json:"accounts_banned"`
+	AccountsChallenged int `json:"accounts_challenged"`
+	AccountsTotal      int `json:"accounts_total"`
 	// Proxies
 	ProxiesAlive int `json:"proxies_alive"`
 	ProxiesInUse int `json:"proxies_in_use"`
@@ -73,13 +74,14 @@ func runObjects() {
 func runStats() {
 	for {
 		// Accounts
-		accountsTotal, accountsUse, accountsBanned, err := database.AccountStats()
+		accountsTotal, accountsUse, accountsBanned, accountsChallenged, err := database.AccountStats()
 		if err != nil {
 			log.Println(err)
 		}
 		stats.AccountsTotal = accountsTotal
 		stats.AccountsBanned = accountsBanned
 		stats.AccountsInUse = accountsUse
+		stats.AccountsChallenged = accountsChallenged
 		// Proxies
 		proxiesAlive, proxiesUse, err := database.ProxyStats()
 		if err != nil {
