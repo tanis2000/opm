@@ -8,7 +8,7 @@
   "dbHost": "localhost",
   "dbUser": "",
   "dbPassword": "",
-  "proxyHost": "http://localhost:8080",
+  "proxyHost": "http://localhost:8081",
   "secret": "meow",
   "allowOrigin": "planet-express.openpokemap.pw"
 }

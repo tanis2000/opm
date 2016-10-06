@@ -168,6 +168,11 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			trainer.Account.Banned = true
 			database.UpdateAccount(trainer.Account)
 			delete(status, trainer.Account.Username)
+		} else if err == api.ErrCheckChallenge {
+			log.Printf("Account %s flagged for Challenge", trainer.Account.Username)
+			trainer.Account.CaptchaFlagged = true
+			database.UpdateAccount(trainer.Account)
+			delete(status, trainer.Account.Username)
 		}
 	}
 	// Just retry when this error comes
