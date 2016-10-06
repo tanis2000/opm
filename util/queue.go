@@ -56,7 +56,7 @@ func (t *TrainerQueue) Get(timeout time.Duration) (*TrainerSession, error) {
 
 // Queue returns a *TrainerSession to the queue. Also adds new *TrainerSessions.
 func (t *TrainerQueue) Queue(ts *TrainerSession, delay time.Duration) {
-	if ts.Account.Banned || ts.Proxy.Dead {
+	if ts.Account.Banned || ts.Proxy.Dead || ts.Account.CaptchaFlagged {
 		return
 	}
 	go func(x *TrainerSession) {
