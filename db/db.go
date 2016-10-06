@@ -307,7 +307,7 @@ func (db *OpenMapDb) MarkAccountsAsUnused() (int, error) {
 }
 
 // AccountStats returns total, used and banned number of accounts (in that order)
-func (db *OpenMapDb) AccountStats() (int, int, int, error) {
+func (db *OpenMapDb) AccountStats() (int, int, int, int, error) {
 	c := db.mongoSession.DB(db.DbName).C("Accounts")
 	total, err := c.Count()
 	if err != nil {
@@ -317,8 +317,13 @@ func (db *OpenMapDb) AccountStats() (int, int, int, error) {
 	if err != nil {
 		return 0, 0, 0, err
 	}
+	flagged, err := c.Find(bson.M{"captchaFlagged": true}).Count()
+	if err != nil {
+		return 0, 0, 0, err
+	}
 	banned, err := c.Find(bson.M{"banned": true}).Count()
-	return total, used, banned, err
+
+	return total, used, banned, flagged, err
 }
 
 // GetBannedAccounts returns all accounts that are flagged as banned from the db

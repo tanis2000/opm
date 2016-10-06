@@ -7,11 +7,12 @@ const (
 )
 
 type Account struct {
-	Username string
-	Password string
-	Provider string
-	Used     bool
-	Banned   bool
+	Username       string
+	Password       string
+	Provider       string
+	Used           bool
+	Banned         bool
+	CaptchaFlagged bool
 }
 
 type Proxy struct {

@@ -208,11 +208,11 @@ func main() {
 			fmt.Printf("Proxies:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n", pAlive, pUsed, float64(pUsed)/float64(pAlive)*100)
 		}
 		// Account status
-		aTotal, aUsed, aBanned, err := database.AccountStats()
+		aTotal, aUsed, aBanned, aFlagged, err := database.AccountStats()
 		if err != nil {
 			log.Println(err)
 		} else {
-			fmt.Printf("Accounts:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n\tBanned:\t%d (%.2f%%)\n", aTotal, aUsed, float64(aUsed)/float64(aTotal)*100, aBanned, float64(aBanned)/float64(aTotal)*100)
+			fmt.Printf("Accounts:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n\tBanned:\t%d (%.2f%%)\n\n\tFlagged:\t%d (%.2f%%)\n", aTotal, aUsed, float64(aUsed)/float64(aTotal)*100, aBanned, float64(aBanned)/float64(aTotal)*100, aFlagged, float64(aFlagged)/float64(aTotal)*100)
 		}
 	}
 	// Remove old Pokemon
