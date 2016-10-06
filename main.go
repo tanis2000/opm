@@ -212,7 +212,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			fmt.Printf("Accounts:\n\tTotal:\t%d\n\tIn use:\t%d (%.2f%%)\n\tBanned:\t%d (%.2f%%)\n\n\tFlagged:\t%d (%.2f%%)\n", aTotal, aUsed, float64(aUsed)/float64(aTotal)*100, aBanned, float64(aBanned)/float64(aTotal)*100, aFlagged, float64(aFlagged)/float64(aTotal)*100)
+			fmt.Printf("Accounts:\n\tTotal:\t\t%d\n\tIn use:\t\t%d (%.2f%%)\n\tBanned:\t\t%d (%.2f%%)\n\tFlagged:\t%d (%.2f%%)\n", aTotal, aUsed, float64(aUsed)/float64(aTotal)*100, aBanned, float64(aBanned)/float64(aTotal)*100, aFlagged, float64(aFlagged)/float64(aTotal)*100)
 		}
 	}
 	// Remove old Pokemon
