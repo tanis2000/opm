@@ -1,8 +1,0 @@
-language: go
-go:
-- tip
-before_install:
-- go get github.com/Sirupsen/logrus
-- go get github.com/gorilla/websocket
-git:
-  submodules: false
