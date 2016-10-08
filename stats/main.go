@@ -7,16 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/femot/opm/opm"
 	"github.com/pogointel/opm/db"
 )
 
-var (
-	dbName     string
-	dbUser     string
-	dbPassword string
-	dbHost     string
-)
-
+var opmSettings opm.Settings
 var stats *Stats
 var database *db.OpenMapDb
 
@@ -43,13 +38,15 @@ func (s *Stats) String() string {
 
 func main() {
 	// db
-	dbHost = "localhost"
-	dbName = "OpenPogoMap"
+	var err error
+	opmSettings, err := opm.LoadSettings("")
+	if err != nil {
+		log.Printf("Error loading settings (%s). Using default settings.\n", err)
+	}
 	// stuff
 	stats = &Stats{}
 	expvar.Publish("opm_stats", stats)
-	var err error
-	database, err = db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
+	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
