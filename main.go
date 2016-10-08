@@ -20,12 +20,14 @@ func init() {
 }
 
 func main() {
+	// Settings
+	opmSettings, err := opm.LoadSettings("")
 	// Flags
 	// DB
-	dbHost := flag.String("dbhost", "localhost", "Host of the database")
-	dbUser := flag.String("dbuser", "", "Username for the database")
-	dbPass := flag.String("dbpass", "", "Password for the database")
-	dbName := flag.String("dbname", "OpenPogoMap", "Name of the database")
+	dbHost := flag.String("dbhost", opmSettings.DbHost, "Host of the database")
+	dbUser := flag.String("dbuser", opmSettings.DbUser, "Username for the database")
+	dbPass := flag.String("dbpass", opmSettings.DbPassword, "Password for the database")
+	dbName := flag.String("dbname", opmSettings.DbName, "Name of the database")
 	// Commands
 	removePokemon := flag.Int64("removepokemon", -1, "Delete Pokemon which expire before the provided unix timestamp")
 	dropProxies := flag.Bool("dropproxies", false, "Delete all proxies from the database")
@@ -35,7 +37,7 @@ func main() {
 	cleanAccounts := flag.Bool("cleanaccounts", false, "Marks all accounts as unused")
 	ufs := flag.Bool("ufs", false, "Update database from status")
 	statusPage := flag.String("statuspage", "http://localhost:8000/s", "Status page to use with -ufs and -status flags")
-	secret := flag.String("secret", "meow", "Secret for the status page")
+	secret := flag.String("secret", opmSettings.Secret, "Secret for the status page")
 	status := flag.Bool("status", false, "Show status")
 	removeDeadProxies := flag.Bool("removedeadproxies", false, "Remove all dead proxies from the database")
 	addPokemon := flag.Bool("addpokemon", false, "Adds a pokemon to the database. Use with -id, -lat and -lng")
