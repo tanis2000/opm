@@ -15,6 +15,10 @@ import (
 	"github.com/femot/opm/opm"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 func main() {
 	// Flags
 	// DB
@@ -71,6 +75,8 @@ func main() {
 		private := generateRandomKey()
 		public := generateRandomKey()
 
+		fmt.Printf("%s\t\t%s\n", private, public)
+
 		key := opm.APIKey{
 			PrivateKey: private,
 			PublicKey:  public,
@@ -84,7 +90,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!\n", key.PrivateKey)
+			fmt.Printf("\nGenerated API key\n\tPrivate:\t%s\n\tPublic:\t\t%s\nThe key is enabled, but not verified!\n", key.PrivateKey, key.PublicKey)
 		}
 	}
 	// stats
@@ -320,7 +326,6 @@ func main() {
 }
 
 func generateRandomKey() string {
-	rand.Seed(time.Now().UnixNano())
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	b := make([]rune, 8)
 	for i := range b {
