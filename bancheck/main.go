@@ -14,21 +14,20 @@ import (
 var database *db.OpenMapDb
 var feed api.Feed
 var crypto api.Crypto
+var opmSettings opm.Settings
 
 func main() {
 	// Log
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	// Settings
-	dbName := "OpenPogoMap"
-	dbHost := "localhost"
-	dbUser := ""
-	dbPassword := ""
-	proxyHost := "http://localhost:8081"
-
-	api.ProxyHost = proxyHost
-	// Databse connections
 	var err error
-	database, err = db.NewOpenMapDb(dbName, dbHost, dbUser, dbPassword)
+	opmSettings, err = opm.LoadSettings("")
+	if err != nil {
+		log.Printf("Error loading settings (%s). Using default settings.\n", err)
+	}
+	api.ProxyHost = opmSettings.ProxyListenAddress
+	// Databse connections
+	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
