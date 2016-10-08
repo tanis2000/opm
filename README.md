@@ -23,6 +23,7 @@
 - `/proxyhub` - Proxy layer for OPM infrastructure
 - `/scanner` - Performs actual scans for monsters and stuff
 - `/stats` - Provides common statistics
+- `/tools` - Random tools for testing/development
 - `/util` - Utility stuff 
 
 
