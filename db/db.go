@@ -58,19 +58,23 @@ func NewOpenMapDb(dbName, dbHost, user, password string) (*OpenMapDb, error) {
 }
 
 func (db *OpenMapDb) ensureIndex() error {
-	err := db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
+	err := db.mongoSession.DB(db.DbName).C("Objects").EnsureIndex(mgo.Index{Key: []string{"$2dsphere:loc"}})
 	if err != nil {
 		return err
 	}
-	err = db.mongoSession.DB("OpenPogoMap").C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
+	err = db.mongoSession.DB(db.DbName).C("Objects").EnsureIndex(mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true})
 	if err != nil {
 		return err
 	}
-	err = db.mongoSession.DB("OpenPogoMap").C("Accounts").EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, DropDups: true})
+	err = db.mongoSession.DB(db.DbName).C("Accounts").EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, DropDups: true})
 	if err != nil {
 		return err
 	}
-	err = db.mongoSession.DB("OpenPogoMap").C("Keys").EnsureIndex(mgo.Index{Key: []string{"key"}, Unique: true, DropDups: true})
+	err = db.mongoSession.DB(db.DbName).C("Keys").EnsureIndex(mgo.Index{Key: []string{"privatekey"}, Unique: true, DropDups: true})
+	if err != nil {
+		return err
+	}
+	err = db.mongoSession.DB(db.DbName).C("Keys").EnsureIndex(mgo.Index{Key: []string{"publickey"}, Unique: true, DropDups: true})
 	if err != nil {
 		return err
 	}
@@ -260,7 +264,7 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 	}
 	// Query db
 	var objects []object
-	err := db.mongoSession.DB("OpenPogoMap").C("Objects").Find(q).All(&objects)
+	err := db.mongoSession.DB(db.DbName).C("Objects").Find(q).All(&objects)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +364,7 @@ func (db *OpenMapDb) ReturnAccount(a opm.Account) {
 
 // AddAccount adds an Account to the database
 func (db *OpenMapDb) AddAccount(a opm.Account) {
-	db.mongoSession.DB("OpenPogoMap").C("Accounts").Insert(a)
+	db.mongoSession.DB(db.DbName).C("Accounts").Insert(a)
 }
 
 // UpdateAccount updates the account information in the database
