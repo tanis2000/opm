@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"log"
 	"time"
 
@@ -431,7 +430,7 @@ func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 	var p proxy
 	err := db.mongoSession.DB(db.DbName).C("Proxy").Find(bson.M{"use": false, "dead": false}).One(&p)
 	if err != nil {
-		return opm.Proxy{}, errors.New("No proxy available.")
+		return opm.Proxy{}, opm.ErrNoProxiesAvailable
 	}
 	// Mark proxy as used
 	db_col := bson.M{"id": p.Id}

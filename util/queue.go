@@ -1,8 +1,9 @@
 package util
 
 import (
-	"errors"
 	"time"
+
+	"github.com/femot/opm/opm"
 )
 
 type TrainerQueue struct {
@@ -50,7 +51,7 @@ func (t *TrainerQueue) Get(timeout time.Duration) (*TrainerSession, error) {
 	case trainer := <-t.out:
 		return trainer, nil
 	case <-time.After(timeout):
-		return &TrainerSession{}, errors.New("Timeout")
+		return &TrainerSession{}, opm.ErrTimeout
 	}
 }
 

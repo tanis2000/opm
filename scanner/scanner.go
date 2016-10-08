@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,9 +15,6 @@ import (
 	"github.com/pogointel/opm/opm"
 	"github.com/pogointel/opm/util"
 )
-
-var ErrBusy = errors.New("All our minions are busy")
-var ErrTimeout = errors.New("Scan timed out")
 
 var checkRequest = func(r *http.Request) bool { return true }
 
@@ -53,7 +49,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	// Check method
 	if r.Method != "POST" {
-		writeScanResponse(w, false, errors.New("Wrong method").Error(), nil)
+		writeScanResponse(w, false, opm.ErrWrongMethod.Error(), nil)
 		return
 	}
 	// Get Latitude and Longitude
@@ -73,13 +69,13 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		// Timeout -> try setup a new one
 		p, err := database.GetProxy()
 		if err != nil {
-			writeScanResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, opm.ErrBusy.Error(), nil)
 			return
 		}
 		a, err := database.GetAccount()
 		if err != nil {
 			database.ReturnProxy(p)
-			writeScanResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, opm.ErrBusy.Error(), nil)
 			return
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
@@ -94,7 +90,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	retrySuccess := false
 	// Check error/timeout
 	if err != nil && ctx.Err() != nil {
-		writeScanResponse(w, false, ErrTimeout.Error(), mapObjects)
+		writeScanResponse(w, false, opm.ErrScanTimeout.Error(), mapObjects)
 		return
 	}
 	// Handle proxy death
@@ -112,7 +108,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			delete(status, trainer.Account.Username)
 			database.ReturnAccount(trainer.Account)
 			log.Println("No proxies available")
-			writeScanResponse(w, false, ErrBusy.Error(), nil)
+			writeScanResponse(w, false, opm.ErrBusy.Error(), nil)
 			return
 		}
 	}
@@ -149,7 +145,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	if !ok {
-		if e == ErrBusy.Error() {
+		if e == opm.ErrBusy.Error() {
 			metrics.ScanBusyPerMinute.Incr(1)
 		} else {
 			metrics.ScanFailsPerMinute.Incr(1)
@@ -157,7 +153,7 @@ func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.
 	}
 	w.Header().Add("Content-Type", "application/json")
 
-	if e != "" && e != ErrTimeout.Error() && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
+	if e != "" && e != opm.ErrScanTimeout.Error() && e != opm.ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
 		e = "Scan failed"
 	}
 
@@ -176,7 +172,7 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 		select {
 		case <-loginTicks:
 		case <-trainer.Context.Done():
-			return nil, ErrTimeout
+			return nil, opm.ErrScanTimeout
 		}
 		err := trainer.Login()
 		if err == api.ErrInvalidAuthToken {
@@ -184,7 +180,7 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 			select {
 			case <-loginTicks:
 			case <-trainer.Context.Done():
-				return nil, ErrTimeout
+				return nil, opm.ErrScanTimeout
 			}
 			err = trainer.Login()
 		}

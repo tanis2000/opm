@@ -1,8 +1,6 @@
 package main
 
-import (
-	"errors"
-)
+import "github.com/pogointel/opm/opm"
 
 //A place to store the clients
 type Hub struct {
@@ -31,7 +29,7 @@ func (h *Hub) Search(proxyID int64) (*Client, error) {
 	if ok {
 		return val, nil
 	}
-	return nil, errors.New("Proxy not found")
+	return nil, opm.ErrProxyNotFound
 }
 
 func (h *Hub) Listen() {

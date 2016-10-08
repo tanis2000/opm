@@ -203,12 +203,12 @@ func loadSettings() (Settings, error) {
 func NewTrainerFromDb() (*util.TrainerSession, error) {
 	p, err := database.GetProxy()
 	if err != nil {
-		return &util.TrainerSession{}, ErrBusy
+		return &util.TrainerSession{}, opm.ErrBusy
 	}
 	a, err := database.GetAccount()
 	if err != nil {
 		database.ReturnProxy(p)
-		return &util.TrainerSession{}, ErrBusy
+		return &util.TrainerSession{}, opm.ErrBusy
 	}
 	trainer := util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 	trainer.SetProxy(p)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,8 +13,6 @@ import (
 	"github.com/pogointel/opm/opm"
 )
 
-var ErrBusy = errors.New("All our minions are busy")
-var ErrTimeout = errors.New("Scan timed out")
 var abuseCounter = make(map[string]int)
 
 func createScanProxy() (http.Handler, error) {
@@ -100,7 +97,7 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 	var objects []opm.MapObject
 	// Check method
 	if r.Method != "POST" {
-		writeCacheResponse(w, false, errors.New("Wrong method").Error(), objects)
+		writeCacheResponse(w, false, opm.ErrWrongMethod.Error(), objects)
 		return
 	}
 	// Get Latitude and Longitude
@@ -149,7 +146,7 @@ func writeCacheResponse(w http.ResponseWriter, ok bool, e string, response []opm
 func writeAPIResopnse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	w.Header().Add("Content-Type", "application/json")
 
-	if e != "" && e != ErrTimeout.Error() && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
+	if e != "" && e != opm.ErrScanTimeout.Error() && e != opm.ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
 		e = "Scan failed"
 	}
 
