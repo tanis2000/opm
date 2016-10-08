@@ -10,8 +10,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/femot/openmap-tools/db"
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/db"
+	"github.com/femot/opm/opm"
 	"github.com/gorilla/websocket"
 )
 
@@ -148,7 +148,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Infof("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
-	p := opm.Proxy{Id: newClient.ID, Dead: false, Use: false}
+	p := opm.Proxy{ID: newClient.ID, Dead: false, Use: false}
 	database.AddProxy(p)
 	newClient.Listen()
 }

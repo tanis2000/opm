@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/openmap-tools/db"
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/db"
+	"github.com/femot/opm/opm"
 )
 
 func main() {
@@ -40,11 +40,10 @@ func main() {
 	lng := flag.Float64("lng", -118.497933, "Latitude for pokemon (-addpokemon)")
 	// API keys
 	key := flag.String("key", "", "API key. Use with -enablekey, -disablekey, ...")
-	addKey := flag.String("addkey", "", "Adds an Api key to the database")
-	enableKey := flag.Bool("enablekey", false, "Enables an Api key")
-	disableKey := flag.Bool("disablekey", false, "Disables an Api key")
-	verifyKey := flag.Bool("verifykey", false, "Verifies an Api key")
-	unverifyKey := flag.Bool("unverifykey", false, "Unverifies an Api key")
+	enableKey := flag.Bool("enablekey", false, "Enables an API key")
+	disableKey := flag.Bool("disablekey", false, "Disables an API key")
+	verifyKey := flag.Bool("verifykey", false, "Verifies an API key")
+	unverifyKey := flag.Bool("unverifykey", false, "Unverifies an API key")
 	setName := flag.String("setname", "", "Sets the name for an API key")
 	setURL := flag.String("seturl", "", "Sets the URL for an API key")
 	keyStats := flag.Bool("keystats", false, "Shows stats for API keys")
@@ -58,7 +57,7 @@ func main() {
 		return
 	}
 
-	// Api key stuff
+	// API key stuff
 	// Generate Key
 	if *genKey {
 		var name string
@@ -69,25 +68,28 @@ func main() {
 		fmt.Print("Enter URL: ")
 		fmt.Scanln(&URL)
 
-		rawKey := generateRandomKey()
-		key := opm.ApiKey{
-			Key:      rawKey,
-			Name:     name,
-			URL:      URL,
-			Enabled:  true,
-			Verified: false,
+		private := generateRandomKey()
+		public := generateRandomKey()
+
+		key := opm.APIKey{
+			PrivateKey: private,
+			PublicKey:  public,
+			Name:       name,
+			URL:        URL,
+			Enabled:    true,
+			Verified:   false,
 		}
 
-		err := database.AddApiKey(key)
+		err := database.AddAPIKey(key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!\n", key.Key)
+			fmt.Printf("\n\nGenerated API key: %s\nThe key is enabled, but not verified!\n", key.PrivateKey)
 		}
 	}
 	// stats
 	if *keyStats {
-		stats := database.ApiKeyStats()
+		stats := database.APIKeyStats()
 		var lines []string
 		for k, v := range stats {
 			if v > 0 {
@@ -98,24 +100,15 @@ func main() {
 			fmt.Println(l)
 		}
 	}
-	// Add
-	if *addKey != "" {
-		err := database.AddApiKey(opm.ApiKey{Key: *addKey})
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Printf("Key %s added\n", *addKey)
-		}
-	}
 	// Enable
 	if *enableKey && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			if !k.Enabled {
 				k.Enabled = true
-				database.UpdateApiKey(k)
+				database.UpdateAPIKey(k)
 			} else {
 				fmt.Println("Key already enabled")
 			}
@@ -124,13 +117,13 @@ func main() {
 
 	// Disable
 	if *disableKey && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			if k.Enabled {
 				k.Enabled = false
-				database.UpdateApiKey(k)
+				database.UpdateAPIKey(k)
 			} else {
 				fmt.Println("Key already disabled")
 			}
@@ -138,13 +131,13 @@ func main() {
 	}
 	// Verify
 	if *verifyKey && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			if !k.Verified {
 				k.Verified = true
-				database.UpdateApiKey(k)
+				database.UpdateAPIKey(k)
 			} else {
 				fmt.Println("Key already verified")
 			}
@@ -152,13 +145,13 @@ func main() {
 	}
 	// Unverify
 	if *unverifyKey && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			if k.Verified {
 				k.Verified = false
-				database.UpdateApiKey(k)
+				database.UpdateAPIKey(k)
 			} else {
 				fmt.Println("Key not verified")
 			}
@@ -166,22 +159,22 @@ func main() {
 	}
 	// Set name for API key
 	if *setName != "" && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			k.Name = *setName
-			database.UpdateApiKey(k)
+			database.UpdateAPIKey(k)
 		}
 	}
 	// Set URL for API key
 	if *setURL != "" && *key != "" {
-		k, err := database.GetApiKey(*key)
+		k, err := database.GetAPIKey(*key)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			k.URL = *setURL
-			database.UpdateApiKey(k)
+			database.UpdateAPIKey(k)
 		}
 	}
 
@@ -293,8 +286,8 @@ func main() {
 			Type:      opm.POKEMON,
 			Lat:       *lat,
 			Lng:       *lng,
-			Id:        randId,
-			PokemonId: *pokeId,
+			ID:        randId,
+			PokemonID: *pokeId,
 			Expiry:    time.Now().Add(15 * time.Minute).Unix(),
 		}
 		database.AddMapObject(obj)

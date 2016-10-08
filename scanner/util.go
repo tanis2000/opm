@@ -10,8 +10,8 @@ import (
 
 	"github.com/paulbellamy/ratecounter"
 
-	"github.com/femot/openmap-tools/opm"
-	"github.com/femot/openmap-tools/util"
+	"github.com/femot/opm/opm"
+	"github.com/femot/opm/util"
 	"github.com/femot/pgoapi-go/api"
 )
 

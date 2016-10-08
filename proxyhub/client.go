@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/opm"
 	"github.com/gorilla/websocket"
 )
 
@@ -90,7 +90,7 @@ func (c *Client) handleDisconnect() {
 	c.conn.Close()
 	c.Hub.Remove(c.ID)
 
-	database.UpdateProxy(opm.Proxy{Id: c.ID, Dead: true})
+	database.UpdateProxy(opm.Proxy{ID: c.ID, Dead: true})
 
 	c.Response <- &Message{[]byte("The client has disconnected"), c, time.Now().Unix()}
 }

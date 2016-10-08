@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/opm"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/femot/pgoapi-go/auth"
 	"github.com/pogodevorg/POGOProtos-go"
@@ -58,7 +58,7 @@ func (t *TrainerSession) Login() error {
 		return err
 	}
 	session := api.NewSession(provider, t.Location, t.Feed, t.crypto, false)
-	err = session.Init(t.Context, t.Proxy.Id)
+	err = session.Init(t.Context, t.Proxy.ID)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (t *TrainerSession) Login() error {
 }
 
 func (t *TrainerSession) SetProxy(p opm.Proxy) {
-	log.Printf("Using proxy %d for %s", p.Id, t.Account.Username)
+	log.Printf("Using proxy %d for %s", p.ID, t.Account.Username)
 	t.Proxy = p
 }
 
@@ -77,19 +77,19 @@ func (t *TrainerSession) SetAccount(a opm.Account) {
 
 // Wrap session functions for trainer sessions
 func (t *TrainerSession) Announce() (*protos.GetMapObjectsResponse, error) {
-	return t.session.Announce(t.Context, t.Proxy.Id)
+	return t.session.Announce(t.Context, t.Proxy.ID)
 }
 func (t *TrainerSession) Call(requests []*protos.Request) (*protos.ResponseEnvelope, error) {
-	return t.session.Call(t.Context, requests, t.Proxy.Id)
+	return t.session.Call(t.Context, requests, t.Proxy.ID)
 }
 func (t *TrainerSession) GetInventory() (*protos.GetInventoryResponse, error) {
-	return t.session.GetInventory(t.Context, t.Proxy.Id)
+	return t.session.GetInventory(t.Context, t.Proxy.ID)
 }
 func (t *TrainerSession) GetPlayer() (*protos.GetPlayerResponse, error) {
-	return t.session.GetPlayer(t.Context, t.Proxy.Id)
+	return t.session.GetPlayer(t.Context, t.Proxy.ID)
 }
 func (t *TrainerSession) GetPlayerMap() (*protos.GetMapObjectsResponse, error) {
-	return t.session.GetPlayerMap(t.Context, t.Proxy.Id)
+	return t.session.GetPlayerMap(t.Context, t.Proxy.ID)
 }
 func (t *TrainerSession) MoveTo(location *api.Location) {
 	t.Location = location

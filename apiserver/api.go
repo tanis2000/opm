@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/opm"
 )
 
 var ErrBusy = errors.New("All our minions are busy")
@@ -36,7 +36,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check API key
-	key, err := database.GetApiKey(keyString)
+	key, err := database.GetAPIKey(keyString)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, err)
@@ -48,8 +48,8 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Metrics
-	if _, ok := keyMetrics[key.Key]; !ok {
-		keyMetrics[key.Key] = newAPIKeyMetrics(key)
+	if _, ok := keyMetrics[key.PublicKey]; !ok {
+		keyMetrics[key.PublicKey] = newAPIKeyMetrics(key)
 	}
 	// Process request
 	var object opm.MapObject
@@ -59,18 +59,18 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		err = json.NewDecoder(r.Body).Decode(&pgmMessage)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			keyMetrics[key.Key].InvalidCounter.Incr(1)
+			keyMetrics[key.PublicKey].InvalidCounter.Incr(1)
 			return
 		}
 		if pgmMessage.Type != "pokemon" {
-			keyMetrics[key.Key].InvalidCounter.Incr(1)
+			keyMetrics[key.PublicKey].InvalidCounter.Incr(1)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		object = pgmMessage.MapObject()
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		keyMetrics[key.Key].InvalidCounter.Incr(1)
+		keyMetrics[key.PublicKey].InvalidCounter.Incr(1)
 		return
 	}
 	// Add source information
@@ -78,7 +78,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	// Time validation
 	if object.Expiry < time.Now().Unix() {
 		log.Printf("%s tried to add expired Pokemon. Ignoring..", key.Name)
-		keyMetrics[key.Key].ExpiredCounter.Incr(1)
+		keyMetrics[key.PublicKey].ExpiredCounter.Incr(1)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -88,8 +88,8 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Add to database
-	keyMetrics[key.Key].PokemonCounter.Incr(1)
-	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonId, key.Name, object.Lat, object.Lng)
+	keyMetrics[key.PublicKey].PokemonCounter.Incr(1)
+	log.Printf("Adding Pokemon %d from %s (%f,%f)\n", object.PokemonID, key.Name, object.Lat, object.Lng)
 	database.AddMapObject(object)
 	// Write response
 	w.WriteHeader(http.StatusOK)
@@ -153,7 +153,7 @@ func writeAPIResopnse(w http.ResponseWriter, ok bool, e string, response []opm.M
 		e = "Scan failed"
 	}
 
-	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
+	r := opm.APIResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
 		log.Println(err)

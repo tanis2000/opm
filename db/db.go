@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/opm"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -29,9 +29,9 @@ type location struct {
 
 type object struct {
 	Type         int
-	PokemonId    int
-	SpawnpointId string
-	Id           string
+	PokemonID    int
+	SpawnpointID string
+	ID           string
 	Loc          location
 	Expiry       int64
 	Lured        bool
@@ -173,8 +173,8 @@ func (db *OpenMapDb) MapObjectStats() (int, int, int, int) {
 func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 	o := object{
 		Type:      opm.POKEMON,
-		PokemonId: p.PokemonId,
-		Id:        p.EncounterId,
+		PokemonID: p.PokemonID,
+		ID:        p.EncounterID,
 		Expiry:    p.DisappearTime,
 		Loc: location{
 			Type:        "Point",
@@ -188,7 +188,7 @@ func (db *OpenMapDb) AddPokemon(p opm.Pokemon) error {
 func (db *OpenMapDb) AddPokestop(ps opm.Pokestop) {
 	o := object{
 		Type:  opm.POKESTOP,
-		Id:    ps.Id,
+		ID:    ps.ID,
 		Lured: ps.Lured,
 		Loc: location{
 			Type:        "Point",
@@ -202,7 +202,7 @@ func (db *OpenMapDb) AddPokestop(ps opm.Pokestop) {
 func (db *OpenMapDb) AddGym(g opm.Gym) {
 	o := object{
 		Type: opm.GYM,
-		Id:   g.Id,
+		ID:   g.ID,
 		Team: g.Team,
 		Loc: location{
 			Type:        "Point",
@@ -216,9 +216,9 @@ func (db *OpenMapDb) AddGym(g opm.Gym) {
 func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 	o := object{
 		Type:         m.Type,
-		PokemonId:    m.PokemonId,
-		SpawnpointId: m.SpawnpointId,
-		Id:           m.Id,
+		PokemonID:    m.PokemonID,
+		SpawnpointID: m.SpawnpointID,
+		ID:           m.ID,
 		Loc: location{
 			Type:        "Point",
 			Coordinates: []float64{m.Lng, m.Lat},
@@ -228,7 +228,7 @@ func (db *OpenMapDb) AddMapObject(m opm.MapObject) {
 		Source: m.Source,
 	}
 	if o.Type != opm.POKEMON {
-		db.mongoSession.DB(db.DbName).C("Objects").Upsert(bson.M{"id": o.Id}, o)
+		db.mongoSession.DB(db.DbName).C("Objects").Upsert(bson.M{"id": o.ID}, o)
 	} else {
 		db.mongoSession.DB(db.DbName).C("Objects").Insert(o)
 	}
@@ -270,8 +270,8 @@ func (db *OpenMapDb) GetMapObjects(lat, lng float64, types []int, radius int) ([
 		// Cast coordinates
 		mapObjects[i] = opm.MapObject{
 			Type:      o.Type,
-			PokemonId: o.PokemonId,
-			Id:        o.Id,
+			PokemonID: o.PokemonID,
+			ID:        o.ID,
 			Lat:       o.Loc.Coordinates[1],
 			Lng:       o.Loc.Coordinates[0],
 			Expiry:    o.Expiry,
@@ -384,7 +384,7 @@ func (db *OpenMapDb) AddProxy(p opm.Proxy) error {
 
 // UpdateProxy updates a proxy in the database
 func (db *OpenMapDb) UpdateProxy(p opm.Proxy) error {
-	_, err := db.mongoSession.DB(db.DbName).C("Proxy").Upsert(bson.M{"id": p.Id}, p)
+	_, err := db.mongoSession.DB(db.DbName).C("Proxy").Upsert(bson.M{"id": p.ID}, p)
 	return err
 }
 
@@ -394,8 +394,8 @@ func (db *OpenMapDb) MaxProxyId() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Println(proxy.Id)
-	return proxy.Id, err
+	log.Println(proxy.ID)
+	return proxy.ID, err
 }
 
 // DropProxies removes ALL proxies from the database
@@ -437,41 +437,41 @@ func (db *OpenMapDb) GetProxy() (opm.Proxy, error) {
 		log.Println(err)
 	}
 	// Return proxy
-	return opm.Proxy{Id: p.Id}, nil
+	return opm.Proxy{ID: p.Id}, nil
 }
 
 // ReturnProxy returns a Proxy back to the db and marks it as not used
 func (db *OpenMapDb) ReturnProxy(p opm.Proxy) {
-	db_col := bson.M{"id": p.Id}
-	change := proxy{Id: p.Id, Dead: false, Use: false}
+	db_col := bson.M{"id": p.ID}
+	change := proxy{Id: p.ID, Dead: false, Use: false}
 	db.mongoSession.DB(db.DbName).C("Proxy").Update(db_col, change)
 }
 
-func (db *OpenMapDb) AddApiKey(k opm.ApiKey) error {
+func (db *OpenMapDb) AddAPIKey(k opm.APIKey) error {
 	return db.mongoSession.DB(db.DbName).C("Keys").Insert(k)
 }
 
-func (db *OpenMapDb) GetApiKey(k string) (opm.ApiKey, error) {
-	var key opm.ApiKey
+func (db *OpenMapDb) GetAPIKey(k string) (opm.APIKey, error) {
+	var key opm.APIKey
 	err := db.mongoSession.DB(db.DbName).C("Keys").Find(bson.M{"key": k}).One(&key)
 	return key, err
 }
 
-func (db *OpenMapDb) UpdateApiKey(k opm.ApiKey) error {
-	return db.mongoSession.DB(db.DbName).C("Keys").Update(bson.M{"key": k.Key}, k)
+func (db *OpenMapDb) UpdateAPIKey(k opm.APIKey) error {
+	return db.mongoSession.DB(db.DbName).C("Keys").Update(bson.M{"key": k.PublicKey}, k)
 }
 
-func (db *OpenMapDb) ApiKeyStats() map[string]int {
+func (db *OpenMapDb) APIKeyStats() map[string]int {
 	result := make(map[string]int)
 	// Get API keys
-	var keys []opm.ApiKey
+	var keys []opm.APIKey
 	err := db.mongoSession.DB(db.DbName).C("Keys").Find(nil).All(&keys)
 	if err != nil {
 		return result
 	}
 	// Get alive pokemon for all of them
 	for _, k := range keys {
-		count, _ := db.mongoSession.DB(db.DbName).C("Objects").Find(bson.M{"source": k.Key, "expiry": bson.M{"$gt": time.Now().Unix()}}).Count()
+		count, _ := db.mongoSession.DB(db.DbName).C("Objects").Find(bson.M{"source": k.PublicKey, "expiry": bson.M{"$gt": time.Now().Unix()}}).Count()
 		result[k.Name] = count
 	}
 	// Return result

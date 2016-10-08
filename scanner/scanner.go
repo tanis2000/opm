@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/openmap-tools/opm"
-	"github.com/femot/openmap-tools/util"
+	"github.com/femot/opm/opm"
+	"github.com/femot/opm/util"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
 )
@@ -128,7 +128,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 		trainer.SetProxy(p)
-		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
+		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
 	trainer.Context = ctx
@@ -148,7 +148,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		p, err = database.GetProxy()
 		if err == nil {
 			trainer.SetProxy(p)
-			status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.Id}
+			status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
 			// Retry with new proxy
 			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
@@ -216,7 +216,7 @@ func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.M
 		e = "Scan failed"
 	}
 
-	r := opm.ApiResponse{Ok: ok, Error: e, MapObjects: response}
+	r := opm.APIResponse{Ok: ok, Error: e, MapObjects: response}
 	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
 		log.Println(err)
@@ -287,9 +287,9 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 			}
 			objects = append(objects, opm.MapObject{
 				Type:         opm.POKEMON,
-				Id:           strconv.FormatUint(p.EncounterId, 36),
-				PokemonId:    int(p.PokemonData.PokemonId),
-				SpawnpointId: p.SpawnPointId,
+				ID:           strconv.FormatUint(p.EncounterId, 36),
+				PokemonID:    int(p.PokemonData.PokemonId),
+				SpawnpointID: p.SpawnPointId,
 				Lat:          p.Latitude,
 				Lng:          p.Longitude,
 				Expiry:       expiry,
@@ -303,8 +303,8 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 					// Lured pokemon found!
 					objects = append(objects, opm.MapObject{
 						Type:      opm.POKEMON,
-						Id:        strconv.FormatUint(f.LureInfo.EncounterId, 36),
-						PokemonId: int(f.LureInfo.ActivePokemonId),
+						ID:        strconv.FormatUint(f.LureInfo.EncounterId, 36),
+						PokemonID: int(f.LureInfo.ActivePokemonId),
 						Lat:       f.Latitude,
 						Lng:       f.Longitude,
 						Expiry:    f.LureInfo.LureExpiresTimestampMs / 1000,
@@ -312,7 +312,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 				}
 				objects = append(objects, opm.MapObject{
 					Type:  opm.POKESTOP,
-					Id:    f.Id,
+					ID:    f.Id,
 					Lat:   f.Latitude,
 					Lng:   f.Longitude,
 					Lured: f.ActiveFortModifier != nil,
@@ -320,7 +320,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 			case protos.FortType_GYM:
 				objects = append(objects, opm.MapObject{
 					Type: opm.GYM,
-					Id:   f.Id,
+					ID:   f.Id,
 					Lat:  f.Latitude,
 					Lng:  f.Longitude,
 					Team: int(f.OwnedByTeam),

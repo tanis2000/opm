@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/femot/openmap-tools/opm"
+	"github.com/femot/opm/opm"
 	"github.com/paulbellamy/ratecounter"
 )
 
@@ -102,13 +102,13 @@ func (m KeyMetrics) String() string {
 
 // APIKeyMetrics stores metrics about individual API keys
 type APIKeyMetrics struct {
-	Key            opm.ApiKey
+	Key            opm.APIKey
 	InvalidCounter *ratecounter.RateCounter
 	PokemonCounter *ratecounter.RateCounter
 	ExpiredCounter *ratecounter.RateCounter
 }
 
-func newAPIKeyMetrics(key opm.ApiKey) APIKeyMetrics {
+func newAPIKeyMetrics(key opm.APIKey) APIKeyMetrics {
 	return APIKeyMetrics{
 		Key:            key,
 		InvalidCounter: ratecounter.NewRateCounter(time.Minute),

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/femot/openmap-tools/opm"
+import "github.com/femot/opm/opm"
 
 // PGMWebhookFormat is the format for incoming webhooks from PokemonGo-Map
 type PGMWebhookFormat struct {
@@ -18,8 +18,8 @@ type PGMWebhookFormat struct {
 func (p PGMWebhookFormat) MapObject() opm.MapObject {
 	return opm.MapObject{
 		Type:      opm.POKEMON,
-		Id:        p.Message.EncounterID,
-		PokemonId: p.Message.PokemonID,
+		ID:        p.Message.EncounterID,
+		PokemonID: p.Message.PokemonID,
 		Expiry:    p.Message.DisappearTime,
 		Lat:       p.Message.Lat,
 		Lng:       p.Message.Lng,

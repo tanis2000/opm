@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/femot/openmap-tools/db"
+	"github.com/femot/opm/db"
 )
 
 var database *db.OpenMapDb
