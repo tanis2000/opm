@@ -17,6 +17,7 @@
 ## What is it?
 `opm` contains the complete OPM stack.
 - `/apiserver` - http endpoint for all OPM api calls
+- `/bancheck` - service that checks if accounts flagged as banned are really banned
 - `/db` - package for interfacing with the OPM database (MongoDB)
 - `/frontend` - Web frontend for OPM
 - `/opm` - OPM specific stuff
