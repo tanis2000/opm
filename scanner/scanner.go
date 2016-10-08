@@ -36,7 +36,7 @@ func listenAndServe() {
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 20 * time.Second,
-		Addr:         settings.ListenAddr,
+		Addr:         opmSettings.ScannerListenAddress,
 		Handler:      mux,
 	}
 	log.Fatal(s.ListenAndServe())
@@ -86,7 +86,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		trainer.SetProxy(p)
 		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
 	}
-	defer trainerQueue.Queue(trainer, time.Duration(settings.ScanDelay)*time.Second)
+	defer trainerQueue.Queue(trainer, time.Duration(scannerSettings.ScanDelay)*time.Second)
 	trainer.Context = ctx
 	// Perform scan
 	mapObjects, err := getMapResult(trainer, lat, lng)
@@ -209,7 +209,7 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 }
 
 func addBlacklist(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("secret") != settings.Secret {
+	if r.FormValue("secret") != opmSettings.Secret {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -277,7 +277,7 @@ func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("secret") != settings.Secret {
+	if r.FormValue("secret") != opmSettings.Secret {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprint(w, "nope")
 		return

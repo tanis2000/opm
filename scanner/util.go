@@ -16,17 +16,10 @@ import (
 )
 
 type Settings struct {
-	Accounts    int    // Number of accounts to load from db
-	ListenAddr  string // Listen address for http
-	ProxyHost   string // Address of the openmap-proxy
-	CacheRadius int    // Radius in meters for getting cached MapObjects
-	ScanDelay   int    // Time between scans per account in seconds
-	ApiCallRate int    // Time between API calls in milliseconds
-	DbName      string // Name of the db
-	DbHost      string // Host of the db
-	DbUser      string
-	DbPassword  string
-	Secret      string
+	Accounts    int // Number of accounts to load from db
+	CacheRadius int // Radius in meters for getting cached MapObjects
+	ScanDelay   int // Time between scans per account in seconds
+	ApiCallRate int // Time between API calls in milliseconds
 	AllowOrigin string
 }
 
@@ -242,7 +235,7 @@ func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(ht
 		// ACAH headers
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			if strings.HasSuffix(origin, settings.AllowOrigin) {
+			if strings.HasSuffix(origin, scannerSettings.AllowOrigin) {
 				w.Header().Add("Access-Control-Allow-Origin", origin)
 			}
 		}

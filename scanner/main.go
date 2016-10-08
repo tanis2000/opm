@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
+	"github.com/femot/pgoapi-go/api"
 	"github.com/pogointel/opm/db"
 	"github.com/pogointel/opm/opm"
 	"github.com/pogointel/opm/util"
-	"github.com/femot/pgoapi-go/api"
 )
 
-var settings Settings
+var scannerSettings Settings
+var opmSettings opm.Settings
 var ticks chan bool
 var loginTicks chan bool
 var feed api.Feed
@@ -28,20 +29,20 @@ func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	var err error
 	// Load settings
-	settings, err = loadSettings()
+	scannerSettings, err = loadSettings()
 	if err != nil {
 		log.Fatal(err)
 	}
 	status = make(Status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
-	api.ProxyHost = settings.ProxyHost
+	api.ProxyHost = opmSettings.ProxyListenAddress
 	blacklist = make(map[string]bool)
 	// Metrics
 	metrics = NewScannerMetrics()
 	expvar.Publish("scanner_metrics", metrics)
 	// Init db
-	database, err = db.NewOpenMapDb(settings.DbName, settings.DbHost, settings.DbUser, settings.DbPassword)
+	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +56,7 @@ func main() {
 		}
 		trainers = append(trainers, t)
 		status[t.Account.Username] = opm.StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.ID}
-		if len(trainers) >= settings.Accounts {
+		if len(trainers) >= scannerSettings.Accounts {
 			break
 		}
 	}
@@ -103,7 +104,7 @@ func main() {
 			ticks <- true
 			time.Sleep(d)
 		}
-	}(time.Duration(settings.ApiCallRate) * time.Millisecond)
+	}(time.Duration(scannerSettings.ApiCallRate) * time.Millisecond)
 	// Start webserver
 	log.Println("Starting http server")
 	listenAndServe()
