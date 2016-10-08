@@ -29,7 +29,6 @@ func listenAndServe() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/s", handleFuncDecorator(statusHandler))
 	mux.HandleFunc("/q", handleFuncDecorator(requestHandler))
-	mux.HandleFunc("/c", handleFuncDecorator(cacheHandler))
 	mux.HandleFunc("/b", addBlacklist)
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 
@@ -41,49 +40,6 @@ func listenAndServe() {
 		Handler:      mux,
 	}
 	log.Fatal(s.ListenAndServe())
-}
-
-func cacheHandler(w http.ResponseWriter, r *http.Request) {
-	var objects []opm.MapObject
-	// Check method
-	if r.Method != "POST" {
-		writeCacheResponse(w, false, errors.New("Wrong method").Error(), objects)
-		return
-	}
-	// Get Latitude and Longitude
-	lat, err := strconv.ParseFloat(r.FormValue("lat"), 64)
-	if err != nil {
-		writeCacheResponse(w, false, "Wrong format", objects)
-		return
-	}
-	lng, err := strconv.ParseFloat(r.FormValue("lng"), 64)
-	if err != nil {
-		writeCacheResponse(w, false, "Wrong format", objects)
-		return
-	}
-	// Pokemon/Gym/Pokestop filter
-	filter := make([]int, 0)
-	if r.FormValue("p") != "" {
-		filter = append(filter, opm.POKEMON)
-	}
-	if r.FormValue("s") != "" {
-		filter = append(filter, opm.POKESTOP)
-	}
-	if r.FormValue("g") != "" {
-		filter = append(filter, opm.GYM)
-	}
-	// If no filter is set -> show everything
-	if len(filter) == 0 {
-		filter = []int{opm.POKEMON, opm.POKESTOP, opm.GYM}
-	}
-	// Get objects from db
-	objects, err = database.GetMapObjects(lat, lng, filter, settings.CacheRadius)
-	if err != nil {
-		writeCacheResponse(w, false, "Failed to get MapObjects from DB", objects)
-		log.Println(err)
-		return
-	}
-	writeCacheResponse(w, true, "", objects)
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,13 +147,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	writeScanResponse(w, true, "", mapObjects)
 }
 
-func writeCacheResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
-	if !ok {
-		metrics.CacheRequestFailsPerMinute.Incr(1)
-	}
-	writeApiResponse(w, ok, e, response)
-}
-
 func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	if !ok {
 		if e == ErrBusy.Error() {
@@ -206,10 +155,6 @@ func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.
 			metrics.ScanFailsPerMinute.Incr(1)
 		}
 	}
-	writeApiResponse(w, ok, e, response)
-}
-
-func writeApiResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	w.Header().Add("Content-Type", "application/json")
 
 	if e != "" && e != ErrTimeout.Error() && e != ErrBusy.Error() && e != "Wrong format" && e != "Wrong method" && e != "Failed to get MapObjects from DB" {
