@@ -27,9 +27,9 @@ const REQUEST_TIMEOUT = 15
 func listenAndServe() {
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/s", handleFuncDecorator(statusHandler))
-	mux.HandleFunc("/q", handleFuncDecorator(requestHandler))
-	mux.HandleFunc("/b", addBlacklist)
+	mux.HandleFunc("/status", handleFuncDecorator(statusHandler))
+	mux.HandleFunc("/scan", handleFuncDecorator(requestHandler))
+	mux.HandleFunc("/ban", addBlacklist)
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 
 	// Start listening
