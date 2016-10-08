@@ -45,7 +45,7 @@ Soon.
     None
 
 ## Contributing
-If you want to contribute, please join us on [https://discord.pogodev.org/](Discord)
+If you want to contribute, please join us on [Discord](https://discord.pogodev.org/)
 in the `#pogointel` channel and ask what you can do to help.
 
 The project is undergoing rapid changes, so blind pull requests are unlikely to be merged,
