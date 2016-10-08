@@ -74,7 +74,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Add source information
-	object.Source = keyString
+	object.Source = key.PublicKey
 	// Time validation
 	if object.Expiry < time.Now().Unix() {
 		log.Printf("%s tried to add expired Pokemon. Ignoring..", key.Name)
