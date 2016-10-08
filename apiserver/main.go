@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/femot/opm/opm"
 	"github.com/pogointel/opm/db"
 )
 
 var database *db.OpenMapDb
 var apiSettings settings
+var opmSettings opm.Settings
 var keyMetrics KeyMetrics
 var apiMetrics APIMetrics
 
@@ -22,8 +24,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	opmSettings, err = opm.LoadSettings("")
 	// Db connections
-	database, err = db.NewOpenMapDb(apiSettings.DbName, apiSettings.DbHost, apiSettings.DbUser, apiSettings.DbPassword)
+	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +47,7 @@ func main() {
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		Addr:         apiSettings.ListenAddr,
+		Addr:         opmSettings.APIListenAddress,
 		Handler:      mux,
 	}
 	// Run server

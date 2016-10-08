@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pogointel/opm/opm"
 	"github.com/paulbellamy/ratecounter"
+	"github.com/pogointel/opm/opm"
 )
 
 type RingBuffer struct {
@@ -134,13 +134,7 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 }
 
 type settings struct {
-	ListenAddr  string // Listen address for http
-	DbName      string // Name of the db
-	DbHost      string // Host of the db
-	DbUser      string // User for db authentication
-	DbPassword  string // Password for db authentication
-	CacheRadius int    // Cache radius
-	ScannerAddr string // Address of the scanner
+	CacheRadius int // Cache radius
 }
 
 func loadSettings() (settings, error) {

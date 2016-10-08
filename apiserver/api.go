@@ -19,7 +19,7 @@ var ErrTimeout = errors.New("Scan timed out")
 var abuseCounter = make(map[string]int)
 
 func createScanProxy() (http.Handler, error) {
-	targetURL, err := url.Parse(apiSettings.ScannerAddr)
+	targetURL, err := url.Parse(opmSettings.ScannerListenAddress)
 	if err != nil {
 		return nil, err
 	}
