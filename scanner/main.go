@@ -33,6 +33,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	opmSettings, err = opm.LoadSettings("")
+	if err != nil {
+		log.Printf("Error loading settings (%s). Using default settings.\n", err)
+	}
 	status = make(Status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
