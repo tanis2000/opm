@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
-	"github.com/femot/openmap-tools/db"
-	"github.com/femot/openmap-tools/opm"
-	"github.com/femot/openmap-tools/util"
 	"github.com/femot/pgoapi-go/api"
+	"github.com/pogointel/opm/db"
+	"github.com/pogointel/opm/opm"
+	"github.com/pogointel/opm/util"
 )
 
 var database *db.OpenMapDb
