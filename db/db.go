@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/opm"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/opm/opm"
-	"github.com/femot/opm/util"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
+	"github.com/pogointel/opm/opm"
+	"github.com/pogointel/opm/util"
 )
 
 var ErrBusy = errors.New("All our minions are busy")

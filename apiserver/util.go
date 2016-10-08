@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/opm"
 	"github.com/paulbellamy/ratecounter"
 )
 

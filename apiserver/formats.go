@@ -1,6 +1,6 @@
 package main
 
-import "github.com/femot/opm/opm"
+import "github.com/pogointel/opm/opm"
 
 // PGMWebhookFormat is the format for incoming webhooks from PokemonGo-Map
 type PGMWebhookFormat struct {

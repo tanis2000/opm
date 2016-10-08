@@ -39,7 +39,7 @@ Soon.
 Soon.
 
 ## Licensing
-[GNU GPL v3](https://github.com/femot/blob/master/LICENSE)
+[GNU GPL v3](https://github.com/pogointel/opm/blob/master/LICENSE)
 
 ### Third Party Licenses
     None

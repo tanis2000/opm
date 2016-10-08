@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/femot/opm/db"
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/db"
+	"github.com/pogointel/opm/opm"
 )
 
 func init() {

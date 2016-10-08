@@ -10,9 +10,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/femot/opm/db"
-	"github.com/femot/opm/opm"
 	"github.com/gorilla/websocket"
+	"github.com/pogointel/opm/db"
+	"github.com/pogointel/opm/opm"
 )
 
 const (

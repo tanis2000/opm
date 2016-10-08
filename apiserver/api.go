@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/opm"
 )
 
 var ErrBusy = errors.New("All our minions are busy")

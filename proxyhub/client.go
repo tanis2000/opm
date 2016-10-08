@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/opm"
 	"github.com/gorilla/websocket"
 )
 

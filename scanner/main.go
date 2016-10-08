@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/femot/gophermon/encrypt"
-	"github.com/femot/opm/db"
-	"github.com/femot/opm/opm"
-	"github.com/femot/opm/util"
+	"github.com/pogointel/opm/db"
+	"github.com/pogointel/opm/opm"
+	"github.com/pogointel/opm/util"
 	"github.com/femot/pgoapi-go/api"
 )
 

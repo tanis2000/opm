@@ -10,9 +10,9 @@ import (
 
 	"github.com/paulbellamy/ratecounter"
 
-	"github.com/femot/opm/opm"
-	"github.com/femot/opm/util"
 	"github.com/femot/pgoapi-go/api"
+	"github.com/pogointel/opm/opm"
+	"github.com/pogointel/opm/util"
 )
 
 type Settings struct {

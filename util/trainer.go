@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/femot/opm/opm"
 	"github.com/femot/pgoapi-go/api"
 	"github.com/femot/pgoapi-go/auth"
 	"github.com/pogodevorg/POGOProtos-go"
+	"github.com/pogointel/opm/opm"
 )
 
 type TrainerSession struct {
