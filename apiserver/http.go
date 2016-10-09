@@ -86,7 +86,7 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 }
 
 func createScanProxy() (http.Handler, error) {
-	targetURL, err := url.Parse(opmSettings.ScannerListenAddress)
+	targetURL, err := url.Parse(fmt.Sprintf("http://%s:%d", opmSettings.ScannerListenAddress, opmSettings.ScannerListenPort))
 	if err != nil {
 		return nil, err
 	}

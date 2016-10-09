@@ -23,7 +23,7 @@ func main() {
 	var err error
 	apiSettings, err = loadSettings()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	opmSettings, err = opm.LoadSettings("")
 	// Db connections

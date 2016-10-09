@@ -11,11 +11,16 @@ var DefaultSettings = Settings{
 	CacheRadius:          1000,
 	DbHost:               "localhost",
 	DbName:               "OPM",
-	APIListenAddress:     ":80",
-	ProxyListenAddress:   ":8080",
-	ProxyWSListenAddress: ":8081",
-	ScannerListenAddress: ":8100",
-	StatsListenAddress:   ":8200",
+	APIListenAddress:     "localhost",
+	APIListenPort:        80,
+	ProxyListenAddress:   "localhost",
+	ProxyListenPort:      8080,
+	ProxyWSListenAddress: "localhost",
+	ProxyWSListenPort:    8081,
+	ScannerListenAddress: "localhost",
+	ScannerListenPort:    8100,
+	StatsListenAddress:   "localhost",
+	StatsListenPort:      8200,
 }
 
 // Settings is a struct for storing OPM settings that are relevant for most packages
@@ -32,10 +37,15 @@ type Settings struct {
 	DbPassword string
 	// Listen addresses
 	APIListenAddress     string
+	APIListenPort        int
 	ProxyListenAddress   string
+	ProxyListenPort      int
 	ProxyWSListenAddress string
+	ProxyWSListenPort    int
 	ScannerListenAddress string
+	ScannerListenPort    int
 	StatsListenAddress   string
+	StatsListenPort      int
 }
 
 // LoadSettings parses the content of the provided settings file as json
