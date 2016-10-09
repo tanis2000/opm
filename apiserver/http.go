@@ -25,7 +25,7 @@ func startHTTP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.Handle("/static", http.StripPrefix("/static", http.FileServer(http.Dir("/frontend"))))
+	mux.Handle("/fe/", http.StripPrefix("/fe/", http.FileServer(http.Dir(apiSettings.StaticFilesDir))))
 	mux.HandleFunc("/q", httpDecorator(scanHandler.ServeHTTP))
 	mux.HandleFunc("/c", httpDecorator(cacheHandler))
 	mux.HandleFunc("/submit", httpDecorator(submitHandler))

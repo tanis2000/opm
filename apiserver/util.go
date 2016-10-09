@@ -147,7 +147,8 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 }
 
 type settings struct {
-	CacheRadius int // Cache radius
+	CacheRadius    int
+	StaticFilesDir string
 }
 
 func loadSettings() (settings, error) {
