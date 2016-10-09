@@ -65,10 +65,9 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 		rand.Seed(time.Now().Unix())
 		mockObject.PokemonID = rand.Intn(150)
-		mockObject.ID = fmt.Sprintf("%d", (rand.Intn(372036854775807)))
-
+		randomId := rand.Int63n(372036854775807)
+		mockObject.ID = strconv.FormatInt(randomId, 36)
 		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
-
 		mapObjects := []opm.MapObject{mockObject}
 		b, _ := json.Marshal(mockObject)
 		log.Printf("Sending mock object: %s", string(b))
