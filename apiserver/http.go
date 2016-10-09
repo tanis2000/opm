@@ -26,8 +26,8 @@ func startHTTP() {
 		log.Fatal(err)
 	}
 	mux.Handle("/fe/", http.StripPrefix("/fe/", http.FileServer(http.Dir(apiSettings.StaticFilesDir))))
-	mux.HandleFunc("/q", httpDecorator(scanHandler.ServeHTTP))
-	mux.HandleFunc("/c", httpDecorator(cacheHandler))
+	mux.HandleFunc("/scan", httpDecorator(scanHandler.ServeHTTP))
+	mux.HandleFunc("/cache", httpDecorator(cacheHandler))
 	mux.HandleFunc("/submit", httpDecorator(submitHandler))
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts

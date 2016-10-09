@@ -57,6 +57,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		writeScanResponse(w, false, err.Error(), nil)
 		return
 	}
+	log.Printf("Scanning %f, %f", lat, lng)
 	// Mock mode
 	if scannerSettings.MockMode {
 		mockObject := opm.MapObject{Type: opm.POKEMON, Expiry: time.Now().Add(10 * time.Minute).Unix()}
@@ -154,6 +155,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	if !ok {
+		log.Println(e)
 		if e == opm.ErrBusy.Error() {
 			scannerMetrics.ScanBusyPerMinute.Incr(1)
 		} else {
