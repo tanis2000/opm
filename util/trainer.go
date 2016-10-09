@@ -1,7 +1,7 @@
 package util
 
 import (
-	"context"
+	"golang.org/x/net/context"
 	"log"
 
 	"github.com/femot/pgoapi-go/api"
