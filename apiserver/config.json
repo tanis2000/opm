@@ -1,7 +1,0 @@
-{
-  "listenAddr": ":8465",
-  "dbName": "OpenPogoMap",
-  "dbHost": "localhost",
-  "dbUser": "",
-  "dbPassword": ""
-}

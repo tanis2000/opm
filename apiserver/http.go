@@ -187,7 +187,7 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 		filter = []int{opm.POKEMON, opm.POKESTOP, opm.GYM}
 	}
 	// Get objects from db
-	objects, err = database.GetMapObjects(lat, lng, filter, apiSettings.CacheRadius)
+	objects, err = database.GetMapObjects(lat, lng, filter, opmSettings.CacheRadius)
 	if err != nil {
 		writeCacheResponse(w, false, "Failed to get MapObjects from DB", objects)
 		log.Println(err)

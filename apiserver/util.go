@@ -147,7 +147,6 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 }
 
 type settings struct {
-	CacheRadius    int
 	StaticFilesDir string
 }
 
