@@ -3,7 +3,7 @@ package util
 import (
 	"time"
 
-	"github.com/femot/opm/opm"
+	"github.com/pogointel/opm/opm"
 )
 
 type TrainerQueue struct {
