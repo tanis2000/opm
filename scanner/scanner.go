@@ -57,6 +57,21 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		writeScanResponse(w, false, err.Error(), nil)
 		return
 	}
+	// Mock mode
+	if scannerSettings.MockMode {
+		mockObject := opm.MapObject{Type: opm.POKEMON, Expiry: time.Now().Add(10 * time.Minute).Unix()}
+		mockObject.Source = "mock"
+
+		rand.Seed(time.Now().Unix())
+		mockObject.PokemonID = rand.Intn(150)
+		mockObject.ID = string(rand.Intn(372036854775807))
+
+		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
+
+		mapObjects := []opm.MapObject{mockObject}
+		writeScanResponse(w, true, "", mapObjects)
+		return
+	}
 	// Get trainer from queue
 	trainer, err := trainerQueue.Get(5 * time.Second)
 	if err != nil {
@@ -133,19 +148,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	//Save to db
 	for _, o := range mapObjects {
 		database.AddMapObject(o)
-	}
-	// Mock mode
-	if scannerSettings.MockMode {
-		mockObject := opm.MapObject{Type: opm.POKEMON, Expiry: time.Now().Add(10 * time.Minute).Unix()}
-		mockObject.Source = "mock"
-
-		rand.Seed(time.Now().Unix())
-		mockObject.PokemonID = rand.Intn(150)
-		mockObject.ID = string(rand.Intn(372036854775807))
-
-		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
-
-		mapObjects = append(mapObjects, mockObject)
 	}
 	writeScanResponse(w, true, "", mapObjects)
 }
