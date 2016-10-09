@@ -70,6 +70,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
 
 		mapObjects := []opm.MapObject{mockObject}
+		b, _ := json.Marshal(mockObject)
+		log.Printf("Sending mock object: %s", string(b))
 		writeScanResponse(w, true, "", mapObjects)
 		return
 	}
