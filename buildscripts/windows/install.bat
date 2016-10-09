@@ -1,14 +1,14 @@
 @echo Installing
 @echo - apiserver
-@go install -v github.com/pogointel/opm/apiserver
+@go intall -v github.com/pogointel/opm/apiserver
 @echo - bancheck
-@go install -v github.com/pogointel/opm/bancheck
+@go get -v github.com/pogointel/opm/bancheck
 @echo - proxyhub
-@go install -v github.com/pogointel/opm/proxyhub
+@go get -v github.com/pogointel/opm/proxyhub
 @echo - scanner
-@go install -v github.com/pogointel/opm/scanner
+@go get -v github.com/pogointel/opm/scanner
 @echo - stats
-@go install -v github.com/pogointel/opm/stats
+@go get -v github.com/pogointel/opm/stats
 @echo - opm
-@go install -v github.com/pogointel/opm
+@go get -v github.com/pogointel/opm
 @echo Done
