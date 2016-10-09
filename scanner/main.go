@@ -1,8 +1,8 @@
 package main
 
 import (
-	"golang.org/x/net/context"
 	"expvar"
+	"golang.org/x/net/context"
 	"log"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/pogointel/opm/util"
 )
 
-var scannerSettings Settings
+var scannerSettings settings
 var opmSettings opm.Settings
 var ticks chan bool
 var loginTicks chan bool
@@ -21,8 +21,8 @@ var feed api.Feed
 var crypto api.Crypto
 var trainerQueue *util.TrainerQueue
 var database *db.OpenMapDb
-var status Status
-var metrics *ScannerMetrics
+var scannerStatus status
+var scannerMetrics *metrics
 var blacklist map[string]bool
 
 func main() {
@@ -37,14 +37,14 @@ func main() {
 	if err != nil {
 		log.Printf("Error loading settings (%s). Using default settings.\n", err)
 	}
-	status = make(Status)
+	scannerStatus = make(status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
 	api.ProxyHost = opmSettings.ProxyListenAddress
 	blacklist = make(map[string]bool)
 	// Metrics
-	metrics = NewScannerMetrics()
-	expvar.Publish("scanner_metrics", metrics)
+	scannerMetrics = NewScannerMetrics()
+	expvar.Publish("scanner_metrics", scannerMetrics)
 	// Init db
 	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
@@ -59,7 +59,7 @@ func main() {
 			break
 		}
 		trainers = append(trainers, t)
-		status[t.Account.Username] = opm.StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.ID}
+		scannerStatus[t.Account.Username] = opm.StatusEntry{AccountName: t.Account.Username, ProxyId: t.Proxy.ID}
 		if len(trainers) >= scannerSettings.Accounts {
 			break
 		}
@@ -108,7 +108,7 @@ func main() {
 			ticks <- true
 			time.Sleep(d)
 		}
-	}(time.Duration(scannerSettings.ApiCallRate) * time.Millisecond)
+	}(time.Duration(scannerSettings.APICallRate) * time.Millisecond)
 	// Start webserver
 	log.Println("Starting http server")
 	listenAndServe()

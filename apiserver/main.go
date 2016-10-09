@@ -8,11 +8,14 @@ import (
 	"github.com/pogointel/opm/opm"
 )
 
-var database *db.OpenMapDb
-var apiSettings settings
-var opmSettings opm.Settings
-var keyMetrics KeyMetrics
-var apiMetrics APIMetrics
+var (
+	database    *db.OpenMapDb
+	opmSettings opm.Settings
+	apiSettings settings
+	keyMetrics  KeyMetrics
+	apiMetrics  APIMetrics
+	blacklist   map[string]bool
+)
 
 func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)

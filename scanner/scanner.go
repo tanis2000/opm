@@ -1,14 +1,16 @@
 package main
 
 import (
-	"golang.org/x/net/context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/femot/pgoapi-go/api"
 	"github.com/pogodevorg/POGOProtos-go"
@@ -18,14 +20,11 @@ import (
 
 var checkRequest = func(r *http.Request) bool { return true }
 
-const REQUEST_TIMEOUT = 15
-
 func listenAndServe() {
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/status", handleFuncDecorator(statusHandler))
-	mux.HandleFunc("/scan", handleFuncDecorator(requestHandler))
-	mux.HandleFunc("/ban", addBlacklist)
+	mux.HandleFunc("/status", statusHandler)
+	mux.HandleFunc("/scan", requestHandler)
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 
 	// Start listening
@@ -39,13 +38,8 @@ func listenAndServe() {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
-	// Check f
-	if !checkRequest(r) {
-		writeScanResponse(w, false, "Failed", nil)
-		return
-	}
 	// Create a context
-	ctx, cancel := context.WithTimeout(context.Background(), REQUEST_TIMEOUT*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), opm.RequestTimeout*time.Second)
 	defer cancel()
 	// Check method
 	if r.Method != "POST" {
@@ -80,7 +74,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		trainer = util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 		trainer.SetProxy(p)
-		status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
+		scannerStatus[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
 	}
 	defer trainerQueue.Queue(trainer, time.Duration(scannerSettings.ScanDelay)*time.Second)
 	trainer.Context = ctx
@@ -100,12 +94,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		p, err = database.GetProxy()
 		if err == nil {
 			trainer.SetProxy(p)
-			status[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
+			scannerStatus[trainer.Account.Username] = opm.StatusEntry{AccountName: trainer.Account.Username, ProxyId: trainer.Proxy.ID}
 			// Retry with new proxy
 			mapObjects, err = getMapResult(trainer, lat, lng)
 			retrySuccess = err == nil
 		} else {
-			delete(status, trainer.Account.Username)
+			delete(scannerStatus, trainer.Account.Username)
 			database.ReturnAccount(trainer.Account)
 			log.Println("No proxies available")
 			writeScanResponse(w, false, opm.ErrBusy.Error(), nil)
@@ -119,12 +113,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Account %s banned", trainer.Account.Username)
 			trainer.Account.Banned = true
 			database.UpdateAccount(trainer.Account)
-			delete(status, trainer.Account.Username)
+			delete(scannerStatus, trainer.Account.Username)
 		} else if err == api.ErrCheckChallenge {
 			log.Printf("Account %s flagged for Challenge", trainer.Account.Username)
 			trainer.Account.CaptchaFlagged = true
 			database.UpdateAccount(trainer.Account)
-			delete(status, trainer.Account.Username)
+			delete(scannerStatus, trainer.Account.Username)
 		}
 	}
 	// Just retry when this error comes
@@ -140,15 +134,28 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	for _, o := range mapObjects {
 		database.AddMapObject(o)
 	}
+	// Mock mode
+	if scannerSettings.MockMode {
+		mockObject := opm.MapObject{Type: opm.POKEMON, Expiry: time.Now().Add(10 * time.Minute).Unix()}
+		mockObject.Source = "mock"
+
+		rand.Seed(time.Now().Unix())
+		mockObject.PokemonID = rand.Intn(150)
+		mockObject.ID = string(rand.Intn(372036854775807))
+
+		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
+
+		mapObjects = append(mapObjects, mockObject)
+	}
 	writeScanResponse(w, true, "", mapObjects)
 }
 
 func writeScanResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {
 	if !ok {
 		if e == opm.ErrBusy.Error() {
-			metrics.ScanBusyPerMinute.Incr(1)
+			scannerMetrics.ScanBusyPerMinute.Incr(1)
 		} else {
-			metrics.ScanFailsPerMinute.Incr(1)
+			scannerMetrics.ScanFailsPerMinute.Incr(1)
 		}
 	}
 	w.Header().Add("Content-Type", "application/json")
@@ -202,18 +209,6 @@ func getMapResult(trainer *util.TrainerSession, lat float64, lng float64) ([]opm
 	}
 	// Parse and return result
 	return parseMapObjects(mapObjects), nil
-}
-
-func addBlacklist(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("secret") != opmSettings.Secret {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-	if r.FormValue("addr") != "" {
-		blacklist[r.FormValue("addr")] = true
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, r.FormValue("addr"))
-	}
 }
 
 func parseMapObjects(r *protos.GetMapObjectsResponse) []opm.MapObject {
@@ -280,7 +275,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	list := make([]opm.StatusEntry, 0)
-	for _, v := range status {
+	for _, v := range scannerStatus {
 		list = append(list, v)
 	}
 	w.WriteHeader(http.StatusOK)

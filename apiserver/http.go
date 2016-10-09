@@ -8,10 +8,15 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pogointel/opm/opm"
 )
+
+var securityCheck = func(r *http.Request) bool {
+	return true
+}
 
 func startHTTP() {
 	// Routes/Handlers
@@ -20,9 +25,10 @@ func startHTTP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.Handle("/q", scanHandler)
-	mux.HandleFunc("/c", handleFuncDecorator(cacheHandler))
-	mux.HandleFunc("/submit", handleFuncDecorator(submitHandler))
+	mux.Handle("/static", http.StripPrefix("/static", http.FileServer(http.Dir("/frontend"))))
+	mux.HandleFunc("/q", httpDecorator(scanHandler.ServeHTTP))
+	mux.HandleFunc("/c", httpDecorator(cacheHandler))
+	mux.HandleFunc("/submit", httpDecorator(submitHandler))
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts
 	s := http.Server{
@@ -33,6 +39,50 @@ func startHTTP() {
 	}
 	// Run server
 	log.Fatal(s.ListenAndServe())
+}
+
+func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Log start
+		start := time.Now()
+		// Check if request is ok
+		if !securityCheck(r) {
+			apiMetrics.SecurityCheckFailsPerMinute.Incr(1)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		// Metadata
+		remoteAddr := r.RemoteAddr
+		if r.Header.Get("CF-Connecting-IP") != "" {
+			remoteAddr = r.Header.Get("CF-Connecting-IP")
+		}
+		// Check blacklist
+		if blacklist[remoteAddr] {
+			w.WriteHeader(http.StatusForbidden)
+			apiMetrics.BlockedRequestsPerMinute.Incr(1)
+			return
+		}
+		// ACAO
+		if opmSettings.AllowOrigin == "*" {
+			w.Header().Add("Access-Control-Allow-Origin", opmSettings.AllowOrigin)
+		} else {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				if strings.HasSuffix(origin, opmSettings.AllowOrigin) {
+					w.Header().Add("Access-Control-Allow-Origin", origin)
+				}
+			}
+		}
+
+		// Actually handle request
+		inner(w, r)
+
+		// Metrics
+		dt := time.Since(start)
+		// Log it
+		log.Printf("%s", dt)
+
+	}
 }
 
 func createScanProxy() (http.Handler, error) {
@@ -143,6 +193,18 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeCacheResponse(w, true, "", objects)
+}
+
+func addBlacklist(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("secret") != opmSettings.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if r.FormValue("addr") != "" {
+		blacklist[r.FormValue("addr")] = true
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, r.FormValue("addr"))
+	}
 }
 
 func writeCacheResponse(w http.ResponseWriter, ok bool, e string, response []opm.MapObject) {

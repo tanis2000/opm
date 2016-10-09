@@ -65,18 +65,31 @@ func NewBuffer(cap int) *RingBuffer {
 type KeyMetrics map[string]APIKeyMetrics
 
 type APIMetrics struct {
-	KeyMetrics KeyMetrics
-	// Requests
-	BlockedRequestsPerMinute *ratecounter.RateCounter
-	// Scans
-	ScansPerMinute      *ratecounter.RateCounter
-	ScanFailsPerMinute  *ratecounter.RateCounter
-	ScanBusyPerMinute   *ratecounter.RateCounter
-	ScanResponseTimesMs *RingBuffer
-	// Cache
-	CacheRequestsPerMinute     *ratecounter.RateCounter
-	CacheRequestFailsPerMinute *ratecounter.RateCounter
-	CacheResponseTimesNs       *RingBuffer
+	KeyMetrics                  KeyMetrics
+	BlockedRequestsPerMinute    *ratecounter.RateCounter
+	SecurityCheckFailsPerMinute *ratecounter.RateCounter
+	ScansPerMinute              *ratecounter.RateCounter
+	ScanFailsPerMinute          *ratecounter.RateCounter
+	ScanBusyPerMinute           *ratecounter.RateCounter
+	ScanResponseTimesMs         *RingBuffer
+	CacheRequestsPerMinute      *ratecounter.RateCounter
+	CacheRequestFailsPerMinute  *ratecounter.RateCounter
+	CacheResponseTimesNs        *RingBuffer
+}
+
+func NewAPIMetrics() *APIMetrics {
+	return &APIMetrics{
+		KeyMetrics:                  make(map[string]APIKeyMetrics),
+		BlockedRequestsPerMinute:    ratecounter.NewRateCounter(time.Minute),
+		SecurityCheckFailsPerMinute: ratecounter.NewRateCounter(time.Minute),
+		ScansPerMinute:              ratecounter.NewRateCounter(time.Minute),
+		ScanFailsPerMinute:          ratecounter.NewRateCounter(time.Minute),
+		ScanBusyPerMinute:           ratecounter.NewRateCounter(time.Minute),
+		ScanResponseTimesMs:         NewBuffer(256),
+		CacheRequestsPerMinute:      ratecounter.NewRateCounter(time.Minute),
+		CacheRequestFailsPerMinute:  ratecounter.NewRateCounter(time.Minute),
+		CacheResponseTimesNs:        NewBuffer(256),
+	}
 }
 
 type metrics struct {

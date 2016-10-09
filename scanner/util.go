@@ -3,9 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/paulbellamy/ratecounter"
@@ -15,17 +12,39 @@ import (
 	"github.com/pogointel/opm/util"
 )
 
-type Settings struct {
-	Accounts    int // Number of accounts to load from db
-	CacheRadius int // Radius in meters for getting cached MapObjects
-	ScanDelay   int // Time between scans per account in seconds
-	ApiCallRate int // Time between API calls in milliseconds
-	AllowOrigin string
+type settings struct {
+	Accounts    int  // Number of initial accounts to load from db
+	ScanDelay   int  // Time between scans per account in seconds
+	APICallRate int  // Time between API calls in milliseconds
+	MockMode    bool // Return random pokemon
 }
 
-type Status map[string]opm.StatusEntry
+var defaultScannerSettings = settings{
+	Accounts:    1,
+	ScanDelay:   25,
+	APICallRate: 1,
+	MockMode:    false,
+}
 
-type ScannerMetrics struct {
+func loadSettings() (settings, error) {
+	s := defaultScannerSettings
+	// Try to find system settings file
+	bytes, err := ioutil.ReadFile("/etc/opm/scanner.json")
+	if err != nil {
+		// Return default settings
+		return s, err
+	}
+	// Unmarshal json
+	err = json.Unmarshal(bytes, &s)
+	if err != nil {
+		return s, err
+	}
+	return s, err
+}
+
+type status map[string]opm.StatusEntry
+
+type metrics struct {
 	// Requests
 	BlockedRequestsPerMinute *ratecounter.RateCounter
 	// Scans
@@ -39,8 +58,8 @@ type ScannerMetrics struct {
 	CacheResponseTimesNs       *RingBuffer
 }
 
-func NewScannerMetrics() *ScannerMetrics {
-	return &ScannerMetrics{
+func NewScannerMetrics() *metrics {
+	return &metrics{
 		BlockedRequestsPerMinute:   ratecounter.NewRateCounter(time.Minute),
 		ScansPerMinute:             ratecounter.NewRateCounter(time.Minute),
 		ScanFailsPerMinute:         ratecounter.NewRateCounter(time.Minute),
@@ -69,7 +88,7 @@ type scannerMetricsData struct {
 	CacheResponseTimesAvg float64 `json:"cache_response_times_avg"`
 }
 
-func (s *ScannerMetrics) String() string {
+func (s *metrics) String() string {
 	scanTimesMax := int64(0)
 	scanTimesMin := int64(0)
 	scanTimesSum := int64(0)
@@ -181,25 +200,6 @@ func NewBuffer(cap int) *RingBuffer {
 	return b
 }
 
-func loadSettings() (Settings, error) {
-	// Try to find system settings file
-	bytes, err := ioutil.ReadFile("/etc/opm/scanner.json")
-	if err != nil {
-		// Use local config
-		bytes, err = ioutil.ReadFile("config.json")
-		if err != nil {
-			return Settings{}, err
-		}
-	}
-	// Unmarshal json
-	var settings Settings
-	err = json.Unmarshal(bytes, &settings)
-	if err != nil {
-		return settings, err
-	}
-	return settings, err
-}
-
 func NewTrainerFromDb() (*util.TrainerSession, error) {
 	p, err := database.GetProxy()
 	if err != nil {
@@ -213,48 +213,4 @@ func NewTrainerFromDb() (*util.TrainerSession, error) {
 	trainer := util.NewTrainerSession(a, &api.Location{}, feed, crypto)
 	trainer.SetProxy(p)
 	return trainer, nil
-}
-
-func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Log start time
-		start := time.Now()
-		// Metadata
-		remoteAddr := r.RemoteAddr
-		if r.Header.Get("CF-Connecting-IP") != "" {
-			remoteAddr = r.Header.Get("CF-Connecting-IP")
-		}
-		lat := r.FormValue("lat")
-		lng := r.FormValue("lng")
-		// Check blacklist
-		if blacklist[remoteAddr] {
-			w.WriteHeader(http.StatusForbidden)
-			metrics.BlockedRequestsPerMinute.Incr(1)
-			return
-		}
-		// ACAH headers
-		origin := r.Header.Get("Origin")
-		if origin != "" {
-			if strings.HasSuffix(origin, scannerSettings.AllowOrigin) {
-				w.Header().Add("Access-Control-Allow-Origin", origin)
-			}
-		}
-		// Handle request
-		inner(w, r)
-		// Metrics
-		dt := time.Since(start)
-		if r.URL.Path == "/q" {
-			metrics.ScansPerMinute.Incr(1)
-			metrics.ScanResponseTimesMs.Add(dt.Nanoseconds() / 1000000)
-		} else if r.URL.Path == "/c" {
-			metrics.CacheRequestsPerMinute.Incr(1)
-			metrics.CacheResponseTimesNs.Add(dt.Nanoseconds())
-		}
-		// Logging
-		if r.Method != "POST" {
-			log.Printf("%-6s %-5s\t%-22s\t%s", r.Method, r.URL.Path, remoteAddr, dt)
-		} else {
-			log.Printf("%-6s %-5s %-20s,%-20s\t%-20s\t%s", r.Method, r.URL.Path, lat, lng, dt, remoteAddr)
-		}
-	}
 }

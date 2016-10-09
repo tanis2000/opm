@@ -7,6 +7,8 @@ import (
 
 // DefaultSettings are the default value for Settings
 var DefaultSettings = Settings{
+	AllowOrigin:          "*",
+	CacheRadius:          1000,
 	DbHost:               "localhost",
 	DbName:               "OPM",
 	APIListenAddress:     ":80",
@@ -18,8 +20,11 @@ var DefaultSettings = Settings{
 
 // Settings is a struct for storing OPM settings that are relevant for most packages
 type Settings struct {
+	// Security
+	Secret      string
+	AllowOrigin string
 	// General
-	Secret string
+	CacheRadius int
 	// DB
 	DbHost     string
 	DbName     string

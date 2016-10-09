@@ -7,6 +7,9 @@ const (
 	GYM      = 3
 )
 
+// RequestTimeout is the global timeout for http requests
+const RequestTimeout = 15
+
 // Account represents a PGO account
 type Account struct {
 	Username       string
