@@ -34,10 +34,11 @@ func startHTTP() {
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		Addr:         fmt.Sprintf("%s:%d", opmSettings.APIListenAddress, opmSettings.APIListenPort),
+		Addr:         fmt.Sprintf(":%d", opmSettings.APIListenPort),
 		Handler:      mux,
 	}
 	// Run server
+	log.Printf("Starting server at: %s", s.Addr)
 	log.Fatal(s.ListenAndServe())
 }
 
