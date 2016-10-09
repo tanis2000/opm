@@ -1,6 +1,6 @@
 @echo Installing
 @echo - apiserver
-@go intall -v github.com/pogointel/opm/apiserver
+@go install -v github.com/pogointel/opm/apiserver
 @echo - bancheck
 @go get -v github.com/pogointel/opm/bancheck
 @echo - proxyhub
