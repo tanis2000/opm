@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -45,12 +46,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	settings, err := opm.LoadSettings("")
+	opmSettings, err := opm.LoadSettings("")
 	if err != nil {
 		log.Printf("Error loading settings (%s). Using default settings.\n", err)
 	}
 	// Login DB
-	database, err = db.NewOpenMapDb("OpenPogoMap", MongoAddr, settings.DbUser, settings.DbPassword)
+	database, err = db.NewOpenMapDb("OpenPogoMap", MongoAddr, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,12 +72,12 @@ func main() {
 	// proxy client (ws) server
 	wsMux := http.NewServeMux()
 	wsMux.HandleFunc("/websocket", wsHandler)
-	wsServer := http.Server{Addr: settings.ProxyWSListenAddress, Handler: wsMux}
+	wsServer := http.Server{Addr: fmt.Sprintf("%s:%d", opmSettings.ProxyWSListenAddress, opmSettings.ProxyWSListenPort), Handler: wsMux}
 	// proxy request server
 	prMux := http.NewServeMux()
 	prMux.HandleFunc("/", requestHandler)
 	prServer := http.Server{
-		Addr:         settings.ProxyListenAddress,
+		Addr:         fmt.Sprintf("%s:%d", opmSettings.ProxyListenAddress, opmSettings.ProxyListenPort),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 20 * time.Second,
 		Handler:      prMux,

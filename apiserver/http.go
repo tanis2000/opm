@@ -34,7 +34,7 @@ func startHTTP() {
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		Addr:         opmSettings.APIListenAddress,
+		Addr:         fmt.Sprintf("%s:%d", opmSettings.APIListenAddress, opmSettings.APIListenPort),
 		Handler:      mux,
 	}
 	// Run server

@@ -31,7 +31,7 @@ func listenAndServe() {
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 20 * time.Second,
-		Addr:         opmSettings.ScannerListenAddress,
+		Addr:         fmt.Sprintf("%s:%d", opmSettings.ScannerListenAddress, opmSettings.ScannerListenPort),
 		Handler:      mux,
 	}
 	log.Fatal(s.ListenAndServe())

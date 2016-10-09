@@ -2,9 +2,11 @@ package main
 
 import (
 	"expvar"
-	"golang.org/x/net/context"
+	"fmt"
 	"log"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/femot/gophermon/encrypt"
 	"github.com/femot/pgoapi-go/api"
@@ -40,7 +42,7 @@ func main() {
 	scannerStatus = make(status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}
-	api.ProxyHost = opmSettings.ProxyListenAddress
+	api.ProxyHost = fmt.Sprintf("%s:%d", opmSettings.ProxyListenAddress, opmSettings.ProxyListenPort)
 	blacklist = make(map[string]bool)
 	// Metrics
 	scannerMetrics = NewScannerMetrics()
