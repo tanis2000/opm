@@ -1,0 +1,6 @@
+{
+  "accounts": 10,
+  "scanDelay": 25,
+  "apiCallRate": 200,
+  "mockMode": false
+}
