@@ -65,7 +65,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 		rand.Seed(time.Now().Unix())
 		mockObject.PokemonID = rand.Intn(150)
-		mockObject.ID = string(rand.Intn(372036854775807))
+		mockObject.ID = fmt.Sprintf("%d", (rand.Intn(372036854775807)))
 
 		mockObject.Lat, mockObject.Lng = util.LatLngOffset(lat, lng, 0.02)
 
