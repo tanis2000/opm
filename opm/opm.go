@@ -38,7 +38,7 @@ type APIResponse struct {
 // MapObject represents an object on the map (Pokemon, Gym or Pokestop)
 type MapObject struct {
 	Type         int     `json:"type"`
-	PokemonID    int     `json:"pokemonID,omitempty"`
+	PokemonID    int     `json:"pokemonId,omitempty"`
 	SpawnpointID string  `json:"-"`
 	ID           string  `json:"id"`
 	Lat          float64 `json:"lat"`
