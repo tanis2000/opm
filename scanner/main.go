@@ -33,7 +33,7 @@ func main() {
 	// Load settings
 	scannerSettings, err = loadSettings()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error loading settings (%s). Using default settings.\n", err)
 	}
 	opmSettings, err = opm.LoadSettings("")
 	if err != nil {
