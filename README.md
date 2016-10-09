@@ -9,7 +9,6 @@
   * [Requirements](#requirements)
   * [Configuration](#configuration)
 * [Licensing](#licensing)
-  * [Third Party Licenses](#third-party-licenses)
 * [Contributing](#contributing)
   * [Core Maintainers](#core-maintainers)
 * [Credits](#credits)
@@ -18,8 +17,8 @@
 `opm` contains the complete OPM stack.
 - `/apiserver` - http endpoint for all OPM api calls
 - `/bancheck` - service that checks if accounts flagged as banned are really banned
+- `/buildscripts` - build/install scripts for windows and linux
 - `/db` - package for interfacing with the OPM database (MongoDB)
-- `/frontend` - Web frontend for OPM
 - `/opm` - OPM specific stuff
 - `/proxyhub` - Proxy layer for OPM infrastructure
 - `/scanner` - Performs actual scans for monsters and stuff
@@ -27,14 +26,13 @@
 - `/tools` - Random tools for testing/development
 - `/util` - Utility stuff 
 
-
-
 ## Documentation
 ### Requirements
-- Go 1.7 - [https://golang.org/]()
+- Go - [https://golang.org/]()
 
 ### Installation
-Soon.
+1. Run `go get github.com/pogointel/opm`
+3. Run `buildscripts/[windows|linux]/install.[bat|sh]` (choose the right one for your platform)
 
 ### Configuration
 Soon.
@@ -42,15 +40,11 @@ Soon.
 ## Licensing
 [GNU GPL v3](https://github.com/pogointel/opm/blob/master/LICENSE)
 
-### Third Party Licenses
-    None
-
 ## Contributing
-If you want to contribute, please join us on [Discord](https://discord.pogodev.org/)
-in the `#pogointel` channel and ask what you can do to help.
-
-The project is undergoing rapid changes, so blind pull requests are unlikely to be merged,
-because other things are already planned.
+Currently, you can contribute to this project by:
+* Joining us on [Discord](https://discord.pogodev.org/) in the `#pogointel` channel.
+* Submitting a detailed [issue](https://github.com/pogointel/opm/issues/new).
+* [Forking the project](https://github.com/pogointel/opm/fork), and sending a pull request back to for review.
 
 ### Core Maintainers
 
@@ -58,8 +52,6 @@ because other things are already planned.
 * [nullpixel](https://github.com/nullpixel1)
 * [femot](https://github.com/femot)
 * [joelfi](https://github.com/joelfi)
-
-
 
 ## Credits
     soon.
