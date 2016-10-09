@@ -81,7 +81,7 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 		// Metrics
 		dt := time.Since(start)
 		// Log it
-		log.Printf("%-6s %-5s %-15s %s", r.Method, r.URL.Path, dt, remoteAddr)
+		log.Printf("%-6s %-10s %-15s %s", r.Method, r.URL.Path, dt, remoteAddr)
 	}
 }
 
