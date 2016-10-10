@@ -52,3 +52,6 @@ Currently, you can contribute to this project by:
 * [nullpixel](https://github.com/nullpixel1)
 * [femot](https://github.com/femot)
 * [joelfi](https://github.com/joelfi)
+
+## Credits
+* [Lisiano](https://github.com/Lisiano256) :heart: - public relations and devops 
