@@ -52,6 +52,3 @@ Currently, you can contribute to this project by:
 * [nullpixel](https://github.com/nullpixel1)
 * [femot](https://github.com/femot)
 * [joelfi](https://github.com/joelfi)
-
-## Credits
-    soon.
