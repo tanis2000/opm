@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // DefaultSettings are the default value for Settings
@@ -70,14 +71,14 @@ func LoadSettings(settingsFile string) Settings {
 	t := reflect.TypeOf(settings)
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
-		env := os.Getenv(t.Field(i).Name)
+		env := os.Getenv(strings.ToUpper(t.Field(i).Name))
 		if env == "" {
 			continue
 		}
 		switch field.Kind() {
 		case reflect.Int:
 			intVal, err := strconv.Atoi(env)
-			if err != nil {
+			if err == nil {
 				field.SetInt(int64(intVal))
 			}
 		case reflect.String:
