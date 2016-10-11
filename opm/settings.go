@@ -71,6 +71,9 @@ func LoadSettings(settingsFile string) Settings {
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		env := os.Getenv(t.Field(i).Name)
+		if env == "" {
+			continue
+		}
 		switch field.Kind() {
 		case reflect.Int:
 			intVal, err := strconv.Atoi(env)
