@@ -3,6 +3,9 @@ package opm
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"reflect"
+	"strconv"
 )
 
 // DefaultSettings are the default value for Settings
@@ -49,7 +52,7 @@ type Settings struct {
 }
 
 // LoadSettings parses the content of the provided settings file as json
-func LoadSettings(settingsFile string) (Settings, error) {
+func LoadSettings(settingsFile string) Settings {
 	settings := DefaultSettings
 	// Use default file, if no file is specified
 	if settingsFile == "" {
@@ -57,11 +60,26 @@ func LoadSettings(settingsFile string) (Settings, error) {
 	}
 	// Read file
 	bytes, err := ioutil.ReadFile(settingsFile)
-	if err != nil {
-		return settings, err
+	if err == nil {
+		// Parse json
+		err = json.Unmarshal(bytes, &settings)
 	}
-	// Parse json
-	err = json.Unmarshal(bytes, &settings)
-	// Return result
-	return settings, err
+	// Get environment vars
+	// reflection magic
+	val := reflect.ValueOf(&settings).Elem()
+	t := reflect.TypeOf(settings)
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		env := os.Getenv(t.Field(i).Name)
+		switch field.Kind() {
+		case reflect.Int:
+			intVal, err := strconv.Atoi(env)
+			if err != nil {
+				field.SetInt(int64(intVal))
+			}
+		case reflect.String:
+			field.SetString(env)
+		}
+	}
+	return settings
 }

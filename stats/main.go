@@ -39,10 +39,7 @@ func (s *Stats) String() string {
 func main() {
 	// db
 	var err error
-	opmSettings, err := opm.LoadSettings("")
-	if err != nil {
-		log.Printf("Error loading settings (%s). Using default settings.\n", err)
-	}
+	opmSettings := opm.LoadSettings("")
 	// stuff
 	stats = &Stats{}
 	expvar.Publish("opm_stats", stats)

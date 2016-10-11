@@ -35,10 +35,7 @@ func main() {
 	if err != nil {
 		log.Printf("Error loading settings (%s). Using default settings.\n", err)
 	}
-	opmSettings, err = opm.LoadSettings("")
-	if err != nil {
-		log.Printf("Error loading settings (%s). Using default settings.\n", err)
-	}
+	opmSettings = opm.LoadSettings("")
 	scannerStatus = make(status)
 	crypto = &encrypt.Crypto{}
 	feed = &api.VoidFeed{}

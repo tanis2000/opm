@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	opmSettings, err = opm.LoadSettings("")
+	opmSettings = opm.LoadSettings("")
 	// Db connections
 	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {

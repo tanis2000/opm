@@ -22,10 +22,7 @@ func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	// Settings
 	var err error
-	opmSettings, err = opm.LoadSettings("")
-	if err != nil {
-		log.Printf("Error loading settings (%s). Using default settings.\n", err)
-	}
+	opmSettings = opm.LoadSettings("")
 	api.ProxyHost = fmt.Sprintf("%s:%d", opmSettings.ProxyListenAddress, opmSettings.ProxyListenPort)
 	// Databse connections
 	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
