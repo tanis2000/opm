@@ -2,6 +2,7 @@ package opm
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -66,12 +67,26 @@ func LoadSettings(settingsFile string) Settings {
 		err = json.Unmarshal(bytes, &settings)
 	}
 	// Get environment vars
-	// reflection magic
-	val := reflect.ValueOf(&settings).Elem()
-	t := reflect.TypeOf(settings)
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		env := os.Getenv(strings.ToUpper(t.Field(i).Name))
+	LoadStructFromEnv(&settings)
+	return settings
+}
+
+// LoadStructFromEnv sets struct fields to the value of environment variables with the same name.
+//	The environment variables must be in all caps and have the exact same name as the field.
+//	If the environment variable is not set, the field is skipped.
+//
+//	Supported field types:
+//		int, string
+func LoadStructFromEnv(v interface{}) error {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Struct {
+		return errors.New("Please pass reference to struct")
+	}
+	elem := val.Elem()
+	typeOf := elem.Type()
+	for i := 0; i < elem.NumField(); i++ {
+		field := elem.Field(i)
+		env := os.Getenv(strings.ToUpper(typeOf.Field(i).Name))
 		if env == "" {
 			continue
 		}
@@ -85,5 +100,5 @@ func LoadSettings(settingsFile string) Settings {
 			field.SetString(env)
 		}
 	}
-	return settings
+	return nil
 }
