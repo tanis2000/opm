@@ -37,7 +37,10 @@ func TestLoadSettingsFromFile(t *testing.T) {
 	// Write them to a temp file
 	tempPath := "temp.settings"
 	f, err := os.Create(tempPath)
-	defer f.Close()
+	defer func() {
+		f.Close()
+		os.Remove(tempPath)
+	}()
 	if err != nil {
 		t.Errorf("Failed to create temp settings file: \"%s\"", err)
 		t.FailNow()
@@ -61,7 +64,7 @@ func TestLoadSettingsFromEnv(t *testing.T) {
 	for i := 0; i < s.NumField(); i++ {
 		field := val.Field(i)
 		rnd := rand.Int63n(666)
-		os.Setenv(strings.ToUpper(s.Field(i).Name), strconv.FormatInt(rnd, 10))
+		os.Setenv("OPM"+strings.ToUpper(s.Field(i).Name), strconv.FormatInt(rnd, 10))
 		switch field.Kind() {
 		case reflect.Int:
 			field.SetInt(rnd)

@@ -72,7 +72,7 @@ func LoadSettings(settingsFile string) Settings {
 }
 
 // LoadStructFromEnv sets struct fields to the value of environment variables with the same name.
-//	The environment variables must be in all caps and have the exact same name as the field.
+//	The environment variables must be in all caps and add the prefix "OPM" to the field's name.
 //	If the environment variable is not set, the field is skipped.
 //
 //	Supported field types:
@@ -86,7 +86,7 @@ func LoadStructFromEnv(v interface{}) error {
 	typeOf := elem.Type()
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
-		env := os.Getenv(strings.ToUpper(typeOf.Field(i).Name))
+		env := os.Getenv("OPM" + strings.ToUpper(typeOf.Field(i).Name))
 		if env == "" {
 			continue
 		}
