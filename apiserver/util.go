@@ -166,6 +166,8 @@ func loadSettings() (settings, error) {
 	if err != nil {
 		return s, err
 	}
+	// Get environment vars (if present)
+	opm.LoadStructFromEnv(&s)
 	return s, err
 }
 
