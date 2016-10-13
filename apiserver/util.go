@@ -151,6 +151,7 @@ type settings struct {
 }
 
 func loadSettings() (settings, error) {
+	s := settings{}
 	// Try to find system settings file
 	bytes, err := ioutil.ReadFile("/etc/opm/api.json")
 	if err != nil {
@@ -161,7 +162,6 @@ func loadSettings() (settings, error) {
 		}
 	}
 	// Unmarshal json
-	var s settings
 	err = json.Unmarshal(bytes, &s)
 	if err != nil {
 		return s, err
