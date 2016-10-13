@@ -1,0 +1,19 @@
+{
+    "secret": "",
+    "allowOrigin": "*",
+    "cacheRadius": 1000,
+    "dbHost": "localhost",
+    "dbName": "",
+    "dbUser": "",
+    "dbPassword": "",
+    "APIListenAddress": "localhost",
+    "APIListenPort": "80",
+    "proxyListenAddress": "localhost",
+    "proxyListenPort": "8080",
+    "proxyWSListenAddress": "localhost",
+    "proxyWSListenPort": "8081",
+    "scannerListenAddress": "localhost",
+    "scannerListenPort": "8100",
+    "statsListenAddress": "localhost",
+    "statsListenPort": "8200"
+}
