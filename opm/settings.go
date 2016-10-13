@@ -2,7 +2,12 @@ package opm
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"os"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 // DefaultSettings are the default value for Settings
@@ -49,7 +54,7 @@ type Settings struct {
 }
 
 // LoadSettings parses the content of the provided settings file as json
-func LoadSettings(settingsFile string) (Settings, error) {
+func LoadSettings(settingsFile string) Settings {
 	settings := DefaultSettings
 	// Use default file, if no file is specified
 	if settingsFile == "" {
@@ -57,11 +62,43 @@ func LoadSettings(settingsFile string) (Settings, error) {
 	}
 	// Read file
 	bytes, err := ioutil.ReadFile(settingsFile)
-	if err != nil {
-		return settings, err
+	if err == nil {
+		// Parse json
+		err = json.Unmarshal(bytes, &settings)
 	}
-	// Parse json
-	err = json.Unmarshal(bytes, &settings)
-	// Return result
-	return settings, err
+	// Get environment vars
+	LoadStructFromEnv(&settings)
+	return settings
+}
+
+// LoadStructFromEnv sets struct fields to the value of environment variables with the same name.
+//	The environment variables must be in all caps and add the prefix "OPM" to the field's name.
+//	If the environment variable is not set, the field is skipped.
+//
+//	Supported field types:
+//		int, string
+func LoadStructFromEnv(v interface{}) error {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Struct {
+		return errors.New("Please pass reference to struct")
+	}
+	elem := val.Elem()
+	typeOf := elem.Type()
+	for i := 0; i < elem.NumField(); i++ {
+		field := elem.Field(i)
+		env := os.Getenv("OPM" + strings.ToUpper(typeOf.Field(i).Name))
+		if env == "" {
+			continue
+		}
+		switch field.Kind() {
+		case reflect.Int:
+			intVal, err := strconv.Atoi(env)
+			if err == nil {
+				field.SetInt(int64(intVal))
+			}
+		case reflect.String:
+			field.SetString(env)
+		}
+	}
+	return nil
 }

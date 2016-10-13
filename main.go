@@ -21,7 +21,7 @@ func init() {
 
 func main() {
 	// Settings
-	opmSettings, err := opm.LoadSettings("")
+	opmSettings := opm.LoadSettings("")
 	// Flags
 	// DB
 	dbHost := flag.String("dbhost", opmSettings.DbHost, "Host of the database")
