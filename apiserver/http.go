@@ -29,6 +29,7 @@ func startHTTP() {
 	mux.HandleFunc("/scan", httpDecorator(scanHandler.ServeHTTP))
 	mux.HandleFunc("/cache", httpDecorator(cacheHandler))
 	mux.HandleFunc("/submit", httpDecorator(submitHandler))
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 	// Create http server with timeouts
 	s := http.Server{

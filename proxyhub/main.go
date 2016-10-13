@@ -69,11 +69,13 @@ func main() {
 
 	// proxy client (ws) server
 	wsMux := http.NewServeMux()
+	wsMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	wsMux.HandleFunc("/websocket", wsHandler)
 	wsServer := http.Server{Addr: fmt.Sprintf(":%d", opmSettings.ProxyWSListenPort), Handler: wsMux}
 	// proxy request server
 	prMux := http.NewServeMux()
 	prMux.HandleFunc("/", requestHandler)
+	prMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	prServer := http.Server{
 		Addr:         fmt.Sprintf(":%d", opmSettings.ProxyListenPort),
 		ReadTimeout:  5 * time.Second,

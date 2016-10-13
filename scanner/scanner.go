@@ -25,6 +25,7 @@ func listenAndServe() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/status", statusHandler)
 	mux.HandleFunc("/scan", requestHandler)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.Handle("/debug/vars", http.DefaultServeMux)
 
 	// Start listening
