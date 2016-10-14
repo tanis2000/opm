@@ -12,6 +12,7 @@ build:
     - cd $GOPATH/src/github.com/pogointel/opm
     - go get -t ./...
     - buildscripts/linux/testbuild.sh
+    - mkdir -p $CI_PROJECT_DIR
 
 test:
   stage: test
