@@ -46,7 +46,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	opmSettings, _ := opm.LoadSettings("")
+	opmSettings := opm.LoadSettings("")
 	// Login DB
 	var err error
 	database, err = db.NewOpenMapDb("OpenPogoMap", MongoAddr, opmSettings.DbUser, opmSettings.DbPassword)
