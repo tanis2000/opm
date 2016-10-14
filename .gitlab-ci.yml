@@ -1,10 +1,8 @@
- - feel free to trim tit 
-
-
 stages:
   - install-environment
   - build
   - test
+  - deploy
 
 install-go:
   stage: install-environment
@@ -27,14 +25,19 @@ install-go:
     - go env
     - which go
 
-build-my-project:
+build:
   stage: build
   script:
     - cd $CURRENT_BUILD_PATH
     - go build
 
-test-my-project:
+test:
   stage: test
   script:
     - cd $CURRENT_BUILD_PATH
     - go test
+
+deploy:
+  stage: deploy
+  script:
+  -
