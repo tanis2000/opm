@@ -1,36 +1,12 @@
 stages:
-  - install-environment
   - build
   - test
   - deploy
 
-install-go:
-  stage: install-environment
-  script:
-    - echo $CI_PROJECT_DIR
-    - echo $PATH
-    - rm -rf $HOME/golang
-    - rm -rf $HOME/gopath
-    - mkdir -p $HOME/golang # for GOROOT (contains the Go binary & core packages)
-    - mkdir -p $HOME/gopath # for GOPATH (contains code and external packages)
-    - curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz 2>/dev/null > go1.6.linux-amd64.tar.gz
-    - tar -C $HOME/golang -xzf go1.6.linux-amd64.tar.gz
-    - export GOROOT=$HOME/golang/go
-    - export GOPATH=$HOME/gopath
-    - export PATH=$PATH:$GOROOT/bin
-    - export PATH=$PATH:$GOPATH/bin
-    - go version
-    - echo $PATH
-    - go env
-    - which go
-
 build:
   stage: build
   script:
-    - export GOROOT=$HOME/golang/go
-    - export GOPATH=$HOME/gopath
-    - export PATH=$PATH:$GOROOT/bin
-    - export PATH=$PATH:$GOPATH/bin
+    - rm -rf $GOPATH/src/github.com/pogointel
     - mkdir -p $GOPATH/src/github.com/pogointel/
     - mv $CI_PROJECT_DIR $GOPATH/src/github.com/pogointel/
     - cd $GOPATH/src/github.com/pogointel/opm
@@ -40,20 +16,12 @@ build:
 test:
   stage: test
   script:
-    - export GOROOT=$HOME/golang/go
-    - export GOPATH=$HOME/gopath
-    - export PATH=$PATH:$GOROOT/bin
-    - export PATH=$PATH:$GOPATH/bin
     - cd $GOPATH/src/github.com/pogointel/opm
     - go test
 
 deploy:
   stage: deploy
   script:
-  - export GOROOT=$HOME/golang/go
-  - export GOPATH=$HOME/gopath
-  - export PATH=$PATH:$GOROOT/bin
-  - export PATH=$PATH:$GOPATH/bin
   - cd $GOPATH/bin
   - gsutil -m rsync -rdx "\..*" ./ gs://opm-binaries/
   - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
