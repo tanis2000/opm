@@ -28,8 +28,8 @@ install-go:
 build:
   stage: build
   script:
-    - cd $CURRENT_BUILD_PATH
-    - go build
+    - $CURRENT_BUILD_PATH/buildscripts/linux/install.sh
+    - $CURRENT_BUILD_PATH/buildscripts/linux/testbuild.sh
 
 test:
   stage: test
@@ -40,4 +40,15 @@ test:
 deploy:
   stage: deploy
   script:
-  -
+  - cd $GOPATH/bin
+  - gsutil -m rsync -rdx "\..*" ./ gs://opm-binaries/
+  - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
+  - ssh opm-scanner-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
+  - ssh opm-proxyhub-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
+  - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart apiserver"
+  - ssh opm-scanner-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart scanner"
+  - ssh opm-proxyhub-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart proxyhub"
+  only:
+  - develop
+  tags:
+  - gce
