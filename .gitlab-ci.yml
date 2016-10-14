@@ -7,7 +7,7 @@ stages:
 install-go:
   stage: install-environment
   script:
-    - export CURRENT_BUILD_PATH=$(pwd)
+    - echo $CI_PROJECT_DIR
     - echo $PATH
     - rm -rf $HOME/golang
     - rm -rf $HOME/gopath
@@ -27,13 +27,13 @@ install-go:
 build:
   stage: build
   script:
-    - $CURRENT_BUILD_PATH/buildscripts/linux/install.sh
-    - $CURRENT_BUILD_PATH/buildscripts/linux/testbuild.sh
+    - $CI_PROJECT_DIR/buildscripts/linux/install.sh
+    - $CI_PROJECT_DIR/buildscripts/linux/testbuild.sh
 
 test:
   stage: test
   script:
-    - cd $CURRENT_BUILD_PATH
+    - cd $CI_PROJECT_DIR
     - go test
 
 deploy:
