@@ -27,18 +27,33 @@ install-go:
 build:
   stage: build
   script:
-    - $CI_PROJECT_DIR/buildscripts/linux/install.sh
-    - $CI_PROJECT_DIR/buildscripts/linux/testbuild.sh
+    - export GOROOT=$HOME/golang/go
+    - export GOPATH=$HOME/gopath
+    - export PATH=$PATH:$GOROOT/bin
+    - export PATH=$PATH:$GOPATH/bin
+    - mkdir -p $GOPATH/src/github.com/pogointel/
+    - mv $CI_PROJECT_DIR $GOPATH/src/github.com/pogointel/
+    - cd $GOPATH/src/github.com/pogointel/opm
+    - go get -t ./...
+    - buildscripts/linux/testbuild.sh
 
 test:
   stage: test
   script:
-    - cd $CI_PROJECT_DIR
+    - export GOROOT=$HOME/golang/go
+    - export GOPATH=$HOME/gopath
+    - export PATH=$PATH:$GOROOT/bin
+    - export PATH=$PATH:$GOPATH/bin
+    - cd $GOPATH/src/github.com/pogointel/opm
     - go test
 
 deploy:
   stage: deploy
   script:
+  - export GOROOT=$HOME/golang/go
+  - export GOPATH=$HOME/gopath
+  - export PATH=$PATH:$GOROOT/bin
+  - export PATH=$PATH:$GOPATH/bin
   - cd $GOPATH/bin
   - gsutil -m rsync -rdx "\..*" ./ gs://opm-binaries/
   - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
