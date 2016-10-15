@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -144,31 +143,6 @@ func (m APIKeyMetrics) Eval() APIKeyMetricsRaw {
 		PokemonPerMinute: m.PokemonCounter.Rate(),
 		ExpiredPerMinute: m.ExpiredCounter.Rate(),
 	}
-}
-
-type settings struct {
-	StaticFilesDir string
-}
-
-func loadSettings() (settings, error) {
-	s := settings{}
-	// Try to find system settings file
-	bytes, err := ioutil.ReadFile("/etc/opm/api.json")
-	if err != nil {
-		// Use local config
-		bytes, err = ioutil.ReadFile("config.json")
-		if err != nil {
-			return settings{}, err
-		}
-	}
-	// Unmarshal json
-	err = json.Unmarshal(bytes, &s)
-	if err != nil {
-		return s, err
-	}
-	// Get environment vars (if present)
-	opm.LoadStructFromEnv(&s)
-	return s, err
 }
 
 func handleFuncDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

@@ -25,9 +25,6 @@ func startHTTP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if apiSettings.StaticFilesDir != "" {
-		mux.Handle("/fe/", http.StripPrefix("/fe/", http.FileServer(http.Dir(apiSettings.StaticFilesDir))))
-	}
 	mux.HandleFunc("/scan", httpDecorator(scanHandler.ServeHTTP))
 	mux.HandleFunc("/cache", httpDecorator(cacheHandler))
 	mux.HandleFunc("/submit", httpDecorator(submitHandler))
