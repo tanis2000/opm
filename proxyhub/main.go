@@ -80,9 +80,9 @@ func main() {
 		Handler:      prMux,
 	}
 	// start servers
-	log.Println("Starting WS server")
+	log.Printf("Starting WS server on port %d", opmSettings.ProxyWSListenPort)
 	go runServer(wsServer)
-	log.Println("Starting requests server")
+	log.Println("Starting requests server on port %d", opmSettings.ProxyListenPort)
 	log.Fatal(prServer.ListenAndServe())
 
 }
