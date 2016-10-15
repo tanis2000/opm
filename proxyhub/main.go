@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"github.com/pogointel/opm/db"
 	"github.com/pogointel/opm/opm"
@@ -42,6 +42,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
+	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	opmSettings := opm.LoadSettings("")
 	// Login DB
 	var err error
