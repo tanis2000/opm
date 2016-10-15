@@ -26,22 +26,16 @@ var defaultScannerSettings = settings{
 	MockMode:    false,
 }
 
-func loadSettings() (settings, error) {
+func loadSettings() settings {
 	s := defaultScannerSettings
 	// Try to find system settings file
 	bytes, err := ioutil.ReadFile("/etc/opm/scanner.json")
-	if err != nil {
-		// Return default settings
-		return s, err
-	}
-	// Unmarshal json
-	err = json.Unmarshal(bytes, &s)
-	if err != nil {
-		return s, err
+	if err == nil {
+		err = json.Unmarshal(bytes, &s)
 	}
 	// Get environment vars (if present)
 	opm.LoadStructFromEnv(&s)
-	return s, err
+	return s
 }
 
 type status map[string]opm.StatusEntry

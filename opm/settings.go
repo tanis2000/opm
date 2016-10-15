@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -90,6 +91,7 @@ func LoadStructFromEnv(v interface{}) error {
 		if env == "" {
 			continue
 		}
+		log.Printf("Parsing environment variable: %-20s %s", "OPM"+strings.ToUpper(typeOf.Field(i).Name), env)
 		switch field.Kind() {
 		case reflect.Int:
 			intVal, err := strconv.Atoi(env)
@@ -98,6 +100,11 @@ func LoadStructFromEnv(v interface{}) error {
 			}
 		case reflect.String:
 			field.SetString(env)
+		case reflect.Bool:
+			b, err := strconv.ParseBool(env)
+			if err == nil {
+				field.SetBool(b)
+			}
 		}
 	}
 	return nil
