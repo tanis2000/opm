@@ -28,6 +28,10 @@ deploy:
   - gcloud compute ssh opm-apiserver-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
   - gcloud compute ssh opm-scanner-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
   - gcloud compute ssh opm-proxyhub-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
+  - sleep 10s
+  - gcloud compute ssh opm-apiserver-2 --zone us-east1-b --command "sudo chmod +x /go/bin/*"
+  - gcloud compute ssh opm-scanner-2 --zone us-east1-b --command "sudo chmod +x /go/bin/*"
+  - gcloud compute ssh opm-proxyhub-2 --zone us-east1-b --command "sudo chmod +x /go/bin/*"
   - gcloud compute ssh opm-apiserver-2 --zone us-east1-b --command "sudo systemctl restart apiserver"
   - gcloud compute ssh opm-scanner-2 --zone us-east1-b --command "sudo systemctl restart scanner"
   - gcloud compute ssh opm-proxyhub-2 --zone us-east1-b --command "sudo systemctl restart proxyhub"
