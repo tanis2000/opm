@@ -6,8 +6,7 @@ stages:
 build:
   stage: build
   script:
-    - cd $GOPATH/src/github.com/pogointel/opm
-    - go get -u ./...
+    - build
 
 test:
   stage: test
