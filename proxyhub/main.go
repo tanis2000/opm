@@ -15,10 +15,6 @@ import (
 	"github.com/pogointel/opm/opm"
 )
 
-const (
-	MongoAddr = "localhost"
-)
-
 var (
 	exitHub  *Hub
 	database *db.OpenMapDb
@@ -49,7 +45,7 @@ func main() {
 	opmSettings := opm.LoadSettings("")
 	// Login DB
 	var err error
-	database, err = db.NewOpenMapDb("OpenPogoMap", MongoAddr, opmSettings.DbUser, opmSettings.DbPassword)
+	database, err = db.NewOpenMapDb(opmSettings.DbName, opmSettings.DbHost, opmSettings.DbUser, opmSettings.DbPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
