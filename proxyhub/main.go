@@ -59,7 +59,7 @@ func main() {
 	// Delete old stuff
 	database.DropProxies()
 
-	log.Info("Started the hub")
+	log.Println("Started the hub")
 
 	exitHub = NewHub()
 	go exitHub.Listen()
@@ -99,14 +99,14 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(proxyID, 10, 64)
 	if err != nil {
-		log.Error(err)
+		log.Println(err)
 		http.Error(w, `Internal error`, http.StatusBadRequest)
 		return
 	}
 
 	proxy, err := exitHub.Search(id)
 	if err != nil {
-		log.Errorf("Invalid proxy_id! %d", id)
+		log.Printf("Invalid proxy_id! %d", id)
 		http.Error(w, `Internal Error`, http.StatusBadRequest)
 		return
 	}
@@ -126,13 +126,13 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error("Failed to upgrade:", err)
+		log.Println("Failed to upgrade:", err)
 		return
 	}
 	defer conn.Close()
 
 	var newClient = NewClient(conn, exitHub)
-	log.Infof("New client %d", newClient.ID)
+	log.Printf("New client %d", newClient.ID)
 	exitHub.Add(newClient)
 
 	p := opm.Proxy{ID: newClient.ID, Dead: false, Use: false}
