@@ -6,19 +6,14 @@ stages:
 build:
   stage: build
   script:
-    - rm -rf $GOPATH/src/github.com/pogointel
-    - mkdir -p $GOPATH/src/github.com/pogointel/
-    - mv $CI_PROJECT_DIR $GOPATH/src/github.com/pogointel/
     - cd $GOPATH/src/github.com/pogointel/opm
-    - go get -t ./...
-    - buildscripts/linux/testbuild.sh
-    - mkdir -p $CI_PROJECT_DIR
+    - go get -u ./...
 
 test:
   stage: test
   script:
     - cd $GOPATH/src/github.com/pogointel/opm
-    - go test
+    - go test -v ./...
 
 deploy:
   stage: deploy
