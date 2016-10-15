@@ -36,7 +36,7 @@ func main() {
 	cleanProxies := flag.Bool("cleanproxies", false, "Marks all proxies as unused")
 	cleanAccounts := flag.Bool("cleanaccounts", false, "Marks all accounts as unused")
 	ufs := flag.Bool("ufs", false, "Update database from status")
-	statusPage := flag.String("statuspage", "http://localhost:8000/s", "Status page to use with -ufs and -status flags")
+	statusPage := flag.String("statuspage", fmt.Sprintf("http://%s:%d/status", opmSettings.ScannerListenAddress, opmSettings.ScannerListenPort), "Status page to use with -ufs and -status flags")
 	secret := flag.String("secret", opmSettings.Secret, "Secret for the status page")
 	status := flag.Bool("status", false, "Show status")
 	removeDeadProxies := flag.Bool("removedeadproxies", false, "Remove all dead proxies from the database")
