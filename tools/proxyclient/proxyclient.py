@@ -50,10 +50,10 @@ def connect(addr, id):
 
 
 def main():
-    num = 200
+    num = 1
 
     for i in range(num):
-        t = threading.Thread(target=connect, args=["ws://localhost:8080/websocket", i])
+        t = threading.Thread(target=connect, args=["ws://104.196.213.149:8080/websocket", i])
         log.debug("Starting %d", i)
         t.start()
 

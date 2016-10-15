@@ -82,7 +82,7 @@ func main() {
 	// start servers
 	log.Printf("Starting WS server on port %d", opmSettings.ProxyWSListenPort)
 	go runServer(wsServer)
-	log.Println("Starting requests server on port %d", opmSettings.ProxyListenPort)
+	log.Printf("Starting requests server on port %d", opmSettings.ProxyListenPort)
 	log.Fatal(prServer.ListenAndServe())
 
 }
