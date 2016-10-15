@@ -12,7 +12,7 @@ var (
 	database    *db.OpenMapDb
 	opmSettings opm.Settings
 	keyMetrics  KeyMetrics
-	apiMetrics  APIMetrics
+	apiMetrics  *APIMetrics
 	blacklist   map[string]bool
 )
 
@@ -26,9 +26,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Expvar
+	// Metrics
+	apiMetrics = NewAPIMetrics()
 	keyMetrics = make(map[string]APIKeyMetrics)
-	expvar.Publish("metrics", keyMetrics)
+	expvar.Publish("keymetrics", keyMetrics)
 	// Start webserver
 	startHTTP()
 }
