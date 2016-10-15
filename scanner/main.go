@@ -31,10 +31,7 @@ func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	var err error
 	// Load settings
-	scannerSettings, err = loadSettings()
-	if err != nil {
-		log.Printf("Error loading settings (%s). Using default settings.\n", err)
-	}
+	scannerSettings = loadSettings()
 	opmSettings = opm.LoadSettings("")
 	scannerStatus = make(status)
 	crypto = &encrypt.Crypto{}
