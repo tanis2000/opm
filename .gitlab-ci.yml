@@ -25,12 +25,12 @@ deploy:
   script:
   - cd $GOPATH/bin
   - gsutil -m rsync -rdx "\..*" ./ gs://opm-binaries/
-  - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
-  - ssh opm-scanner-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
-  - ssh opm-proxyhub-2 -i ~/.ssh/google_compute_engine "sudo gsutil -m rsync -rd gs://opm-gitlabrunner/ /go/"
-  - ssh opm-apiserver-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart apiserver"
-  - ssh opm-scanner-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart scanner"
-  - ssh opm-proxyhub-2 -i ~/.ssh/google_compute_engine "sudo systemctl restart proxyhub"
+  - gcloud compute ssh opm-apiserver-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
+  - gcloud compute ssh opm-scanner-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
+  - gcloud compute ssh opm-proxyhub-2 --zone us-east1-b --command "sudo gsutil -m rsync -rd gs://opm-binaries/ /go/bin/"
+  - gcloud compute ssh opm-apiserver-2 --zone us-east1-b --command "sudo systemctl restart apiserver"
+  - gcloud compute ssh opm-scanner-2 --zone us-east1-b --command "sudo systemctl restart scanner"
+  - gcloud compute ssh opm-proxyhub-2 --zone us-east1-b --command "sudo systemctl restart proxyhub"
   only:
   - develop
   tags:
