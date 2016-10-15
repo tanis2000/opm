@@ -17,6 +17,9 @@ const (
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 7) / 10
+
+	//Max period allowed to read from the server
+	writeWait = 10
 )
 
 //A struct to store client data
@@ -52,6 +55,9 @@ func (c *Client) Send(data []byte) {
 func (c *Client) readHandler() {
 	defer c.handleDisconnect()
 
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
 		_, mes, err := c.conn.ReadMessage()
 		if err != nil {
@@ -72,6 +78,9 @@ func (c *Client) Listen() {
 	for {
 		select {
 		case toWrite := <-c.Writer:
+
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			
 			err := c.conn.WriteMessage(1, toWrite)
 			if err != nil {
 				log.Info("Failed to write to ws")

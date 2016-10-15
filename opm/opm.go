@@ -30,9 +30,9 @@ type Proxy struct {
 // APIResponse represents a response sent back to the requesting client
 // This response type is used for cache and scan requests.
 type APIResponse struct {
-	Ok         bool
-	Error      string
-	MapObjects []MapObject
+	Ok         bool        `json:"ok"`
+	Error      string      `json:"error"`
+	MapObjects []MapObject `json:"mapObjects"`
 }
 
 // MapObject represents an object on the map (Pokemon, Gym or Pokestop)
