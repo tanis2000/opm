@@ -7,13 +7,13 @@
     "dbUser": "",
     "dbPassword": "",
     "APIListenAddress": "localhost",
-    "APIListenPort": "80",
+    "APIListenPort": 80,
     "proxyListenAddress": "localhost",
-    "proxyListenPort": "8080",
+    "proxyListenPort": 8080,
     "proxyWSListenAddress": "localhost",
-    "proxyWSListenPort": "8081",
+    "proxyWSListenPort": 8081,
     "scannerListenAddress": "localhost",
-    "scannerListenPort": "8100",
+    "scannerListenPort": 8100,
     "statsListenAddress": "localhost",
-    "statsListenPort": "8200"
+    "statsListenPort": 8200
 }
