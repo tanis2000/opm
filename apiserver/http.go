@@ -60,7 +60,7 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 		// Check if request is ok
 		if !securityCheck(w, r) {
 			apiMetrics.SecurityCheckFailsPerMinute.Incr(1)
-			w.WriteHeader(http.StatusForbidden)
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 		// Metadata
@@ -70,7 +70,7 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 		}
 		// Check blacklist
 		if blacklist[remoteAddr] {
-			w.WriteHeader(http.StatusForbidden)
+			w.WriteHeader(http.StatusOK)
 			apiMetrics.BlockedRequestsPerMinute.Incr(1)
 			return
 		}
