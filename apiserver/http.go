@@ -46,6 +46,17 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Log start
 		start := time.Now()
+		// ACAO
+		if opmSettings.AllowOrigin == "*" {
+			w.Header().Add("Access-Control-Allow-Origin", opmSettings.AllowOrigin)
+		} else {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				if strings.HasSuffix(origin, opmSettings.AllowOrigin) {
+					w.Header().Add("Access-Control-Allow-Origin", origin)
+				}
+			}
+		}
 		// Check if request is ok
 		if !securityCheck(r) {
 			apiMetrics.SecurityCheckFailsPerMinute.Incr(1)
@@ -62,17 +73,6 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 			w.WriteHeader(http.StatusForbidden)
 			apiMetrics.BlockedRequestsPerMinute.Incr(1)
 			return
-		}
-		// ACAO
-		if opmSettings.AllowOrigin == "*" {
-			w.Header().Add("Access-Control-Allow-Origin", opmSettings.AllowOrigin)
-		} else {
-			origin := r.Header.Get("Origin")
-			if origin != "" {
-				if strings.HasSuffix(origin, opmSettings.AllowOrigin) {
-					w.Header().Add("Access-Control-Allow-Origin", origin)
-				}
-			}
 		}
 
 		// Actually handle request
