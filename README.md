@@ -28,7 +28,7 @@
 
 ## Documentation
 ### Requirements
-- Go - [https://golang.org/]()
+- Go - [golang.org/](https://golang.org/)
 
 ### Installation
 1. Run `go get github.com/pogointel/opm`
