@@ -14,7 +14,7 @@ import (
 	"github.com/pogointel/opm/opm"
 )
 
-var securityCheck = func(r *http.Request) bool {
+var securityCheck = func(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
@@ -34,7 +34,7 @@ func startHTTP() {
 	s := http.Server{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		Addr:         fmt.Sprintf(":%d", opmSettings.APIListenPort),
+		Addr:         fmt.Sprintf(":%d", 8080),
 		Handler:      mux,
 	}
 	// Run server
@@ -47,7 +47,7 @@ func httpDecorator(inner func(http.ResponseWriter, *http.Request)) func(http.Res
 		// Log start
 		start := time.Now()
 		// Check if request is ok
-		if !securityCheck(r) {
+		if !securityCheck(w, r) {
 			apiMetrics.SecurityCheckFailsPerMinute.Incr(1)
 			w.WriteHeader(http.StatusForbidden)
 			return
